@@ -1,16 +1,17 @@
 // app.js - logika generowania zawodników, UI i persystencja
 (() => {
+  const COUNTRY_CODES = ['PL','NL','GB','ES','DE','PT','AR','BR','CN','ZA'];
   const COUNTRIES = [
-    {code:'PL',name:'Polska',flag:'/soccersimulator/docs/assets/flags/pl.svg',color:'#ff4d4f'},
-    {code:'NL',name:'Holandia',flag:'/soccersimulator/docs/assets/flags/nl.svg',color:'#ff7a18'},
-    {code:'GB',name:'Anglia',flag:'/soccersimulator/docs/assets/flags/gb.svg',color:'#3f7fff'},
-    {code:'ES',name:'Hiszpania',flag:'/soccersimulator/docs/assets/flags/es.svg',color:'#ffb300'},
-    {code:'DE',name:'Niemcy',flag:'/soccersimulator/docs/assets/flags/de.svg',color:'#222831'},
-    {code:'PT',name:'Portugalia',flag:'/soccersimulator/docs/assets/flags/pt.svg',color:'#2db34a'},
-    {code:'AR',name:'Argentyna',flag:'/soccersimulator/docs/assets/flags/ar.svg',color:'#4ea8de'},
-    {code:'BR',name:'Brazylia',flag:'/soccersimulator/docs/assets/flags/br.svg',color:'#1fbf4a'},
-    {code:'CN',name:'Chiny',flag:'/soccersimulator/docs/assets/flags/cn.svg',color:'#e63946'},
-    {code:'ZA',name:'RPA',flag:'/soccersimulator/docs/assets/flags/za.svg',color:'#f77f00'},
+    {code:'PL',name:'Polska',flag:'https://flagsapi.com/PL/flat/64.png',color:'#ff4d4f'},
+    {code:'NL',name:'Holandia',flag:'https://flagsapi.com/NL/flat/64.png',color:'#ff7a18'},
+    {code:'GB',name:'Anglia',flag:'https://flagsapi.com/GB/flat/64.png',color:'#3f7fff'},
+    {code:'ES',name:'Hiszpania',flag:'https://flagsapi.com/ES/flat/64.png',color:'#ffb300'},
+    {code:'DE',name:'Niemcy',flag:'https://flagsapi.com/DE/flat/64.png',color:'#222831'},
+    {code:'PT',name:'Portugalia',flag:'https://flagsapi.com/PT/flat/64.png',color:'#2db34a'},
+    {code:'AR',name:'Argentyna',flag:'https://flagsapi.com/AR/flat/64.png',color:'#4ea8de'},
+    {code:'BR',name:'Brazylia',flag:'https://flagsapi.com/BR/flat/64.png',color:'#1fbf4a'},
+    {code:'CN',name:'Chiny',flag:'https://flagsapi.com/CN/flat/64.png',color:'#e63946'},
+    {code:'ZA',name:'RPA',flag:'https://flagsapi.com/ZA/flat/64.png',color:'#f77f00'},
   ];
 
   // przykładowe imiona i nazwiska (rozszerzalne) — staramy się unikać duplikatów
@@ -51,8 +52,8 @@
     document.getElementById('tab-dashboard').addEventListener('click', ()=>showTab('dashboard'));
     document.getElementById('tab-players').addEventListener('click', ()=>showTab('players'));
     document.getElementById('generate-player').addEventListener('click', ()=>{ const p = generatePlayer(); players.push(p); savePlayers(); renderList(); showPlayer(p.id); });
-    document.getElementById('export-json').addEventListener('click', exportJSON);
-    document.getElementById('import-json').addEventListener('change', importJSON);
+    document.getElementById('save-json').addEventListener('click', saveJSON);
+    document.getElementById('load-json').addEventListener('change', loadJSONFile);
     document.getElementById('back-to-list').addEventListener('click', ()=>{showTab('players')});
 
     document.querySelectorAll('#players-table thead th[data-sort]').forEach(th=>th.addEventListener('click', ()=>{sortBy(th.dataset.sort)}));
@@ -167,7 +168,7 @@
     list.forEach(p=>{
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><div class="player-row"><div class="avatar small" style="background:${p.countryColor}">${avatarText(p)}</div><div><div><a class="link" href="/soccersimulator/docs/player.html?id=${p.id}">${p.name}</a></div><div class="meta">${p.countryName}</div></div></div></td>
+        <td><div class="player-row"><div class="avatar small" style="background:${p.countryColor}">${avatarText(p)}</div><div><div><a class="link" href="players/${p.id}.html">${p.name}</a></div><div class="meta">${p.countryName}</div></div></div></td>
         <td>${p.age}</td>
         <td><img class="flag" src="${p.countryFlag}" alt="${p.countryName}"/> ${p.countryName}</td>
         <td>${p.ovr}</td>
@@ -189,11 +190,9 @@
 
   function avatarText(p){ const parts = p.name.split(' '); const initials = (parts[0][0] || '') + (parts[1] ? parts[1][0] : ''); return initials.toUpperCase(); }
 
-  function flagFor(code){ const c = COUNTRIES.find(x=>x.code===code); return c?c.flag:''; }
-
   function displayHidden(p){ const hidden = computeHiddenRange(p.potential, p.age, p.ovr); return hidden.low + '–' + hidden.high; }
 
-  function showPlayer(id){ const p = players.find(x=>x.id===id); if(!p) return; showTab('player-view'); document.getElementById('pv-name').textContent = p.name; document.getElementById('pv-age').textContent = p.age; document.getElementById('pv-potential').textContent = p.potential; document.getElementById('pv-country').innerHTML = `<img class="flag" src="${p.countryFlag}"/> ${p.countryName}`; document.getElementById('pv-avatar').textContent = avatarText(p); document.getElementById('pv-avatar').style.background = p.countryColor; document.getElementById('pv-ovr').textContent = p.ovr; const h = computeHiddenRange(p.potential, p.age, p.ovr); document.getElementById('pv-hidden').textContent = `${h.low}–${h.high}`; const ul = document.getElementById('pv-skills'); ul.innerHTML=''; Object.keys(p.skills).forEach(k=>{ const li = document.createElement('li'); li.innerHTML = `<strong>${k}</strong><span>${p.skills[k]}</span>`; ul.appendChild(li); }); document.getElementById('pv-permalink').href = `/soccersimulator/docs/player.html?id=${p.id}`; document.getElementById('pv-delete').onclick = ()=>{ if(confirm('Usuń zawodnika '+p.name+'?')) deletePlayer(p.id); }; renderRadar(p); }
+  function showPlayer(id){ const p = players.find(x=>x.id===id); if(!p) return; showTab('player-view'); document.getElementById('pv-name').textContent = p.name; document.getElementById('pv-age').textContent = p.age; document.getElementById('pv-potential').textContent = p.potential; document.getElementById('pv-country').innerHTML = `<img class="flag" src="${p.countryFlag}"/> ${p.countryName}`; document.getElementById('pv-avatar').textContent = avatarText(p); document.getElementById('pv-avatar').style.background = p.countryColor; document.getElementById('pv-ovr').textContent = p.ovr; const h = computeHiddenRange(p.potential, p.age, p.ovr); document.getElementById('pv-hidden').textContent = `${h.low}–${h.high}`; const ul = document.getElementById('pv-skills'); ul.innerHTML=''; Object.keys(p.skills).forEach(k=>{ const li = document.createElement('li'); li.innerHTML = `<strong>${k}</strong><span>${p.skills[k]}</span>`; ul.appendChild(li); }); document.getElementById('pv-permalink').href = `players/${p.id}.html`; document.getElementById('pv-delete').onclick = ()=>{ if(confirm('Usuń zawodnika '+p.name+'?')) deletePlayer(p.id); }; renderRadar(p); }
 
   let radarChart = null;
   function renderRadar(p){ const ctx = document.getElementById('radarChart'); const labels = Object.keys(p.skills); const data = labels.map(k=>p.skills[k]); if(radarChart) radarChart.destroy(); radarChart = new Chart(ctx.getContext('2d'),{ type:'radar', data:{labels, datasets:[{label:'Umiejętności',data,backgroundColor:'rgba(63,127,255,0.12)',borderColor:'rgba(63,127,255,0.9)',pointBackgroundColor:'rgba(63,127,255,0.9)'}]}, options:{scales:{r:{beginAtZero:true,max:99}},plugins:{legend:{display:false}}} }); }
@@ -203,8 +202,103 @@
   function sortBy(k){ if(lastSort.k===k) lastSort.dir *= -1; else { lastSort.k = k; lastSort.dir = 1; } players.sort((a,b)=>{ let va = getSortValue(a,k); let vb = getSortValue(b,k); if(typeof va === 'string') return va.localeCompare(vb) * lastSort.dir; return (va - vb) * lastSort.dir; }); renderList(); }
   function getSortValue(p,k){ if(k==='name') return p.name; if(k==='age') return p.age; if(k==='country') return p.countryName; if(k==='ovr') return p.ovr; if(k==='potential') return p.potential; return p.skills && p.skills[k.charAt(0).toUpperCase()+k.slice(1)] || 0; }
 
-  function exportJSON(){ const data = JSON.stringify(players, null, 2); const blob = new Blob([data],{type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download = 'players_export.json'; a.click(); URL.revokeObjectURL(url); }
-  function importJSON(e){ const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ()=>{ try{ const imported = JSON.parse(r.result); if(Array.isArray(imported)){ const ids = new Set(players.map(p=>p.id)); imported.forEach(p=>{ if(!p.id) p.id = uid(); while(ids.has(p.id)){ p.id = uid(); } ids.add(p.id); players.push(p); }); savePlayers(); renderList(); alert('Zaimportowano: '+imported.length+' zawodników'); } else alert('Plik nie jest listą zawodników'); } catch(err){ alert('Błąd odczytu pliku'); } }; r.readAsText(f); e.target.value=''; }
+  function saveJSON(){ const data = JSON.stringify(players, null, 2); const blob = new Blob([data],{type:'application/json'}); saveAs(blob, 'players.json'); }
+
+  function loadJSONFile(e){ const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ()=>{ try{ const imported = JSON.parse(r.result); if(Array.isArray(imported)){
+        // replace all players
+        players = imported.map(p=>{ if(!p.id) p.id = uid(); // ensure id
+          // ensure caps and schema
+          p.skills = p.skills || {};
+          Object.keys(p.skills).forEach(k=>{ p.skills[k] = Math.max(1, Math.min(99, Math.round(p.skills[k] || 1))); });
+          p.potential = Math.max(1, Math.min(99, Math.round(p.potential || 50)));
+          p.ovr = Math.min(99, Math.round(p.ovr || (Object.values(p.skills).reduce((a,b)=>a+b,0)/ (Object.values(p.skills).length||1))));
+          // ensure country mapping
+          const cc = COUNTRIES.find(c=>c.code===p.country) || sample(COUNTRIES);
+          p.country = cc.code; p.countryName = cc.name; p.countryFlag = cc.flag; p.countryColor = cc.color;
+          return p; });
+        savePlayers(); renderList(); alert('Wczytano i podmieniono listę zawodników: '+players.length);
+        // generate static pages zip and prompt download
+        generateStaticPagesZip(players);
+      } else alert('Plik nie jest listą zawodników'); } catch(err){ alert('Błąd odczytu pliku'); } }; r.readAsText(f); e.target.value=''; }
+
+  async function generateStaticPagesZip(list){
+    const zip = new JSZip();
+    // add common assets
+    zip.file('styles.css', await fetch('styles.css').then(r=>r.text()).catch(()=>''));
+    // index.html reference (not needed but include a simple index)
+    // create player files inside players/
+    const folder = zip.folder('players');
+    list.forEach(p=>{
+      const html = generateStaticPlayerHTML(p);
+      folder.file(p.id + '.html', html);
+    });
+    const content = await zip.generateAsync({type:'blob'});
+    saveAs(content, 'players_static_pages.zip');
+  }
+
+  function generateStaticPlayerHTML(p){
+    // Simple self-contained player page referencing styles.css and Chart.js CDN
+    const skillsRows = Object.keys(p.skills).map(k=>`<li><strong>${k}</strong><span>${p.skills[k]}</span></li>`).join('\n');
+    const labels = JSON.stringify(Object.keys(p.skills));
+    const data = JSON.stringify(Object.values(p.skills));
+    const html = `<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>${escapeHtml(p.name)} — profil</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar"><h1>Profil zawodnika</h1><nav><a class="link" href="../index.html">← Powrót do listy</a></nav></header>
+    <main>
+      <div class="card player-card">
+        <div class="player-header">
+          <div class="avatar" style="background:${p.countryColor};font-weight:700;font-size:28px;padding:12px;border-radius:12px;">${escapeHtml(avatarInitials(p))}</div>
+          <div>
+            <h2>${escapeHtml(p.name)}</h2>
+            <div><img class="flag" src="${p.countryFlag}"/> ${p.countryName}</div>
+            <div class="meta">Wiek: ${p.age} — Potencjał: ${p.potential} (${computeHiddenRange(p.potential,p.age,p.ovr).low}–${computeHiddenRange(p.potential,p.age,p.ovr).high})</div>
+          </div>
+        </div>
+
+        <div class="player-body">
+          <div class="skills">
+            <h3>Umiejętności</h3>
+            <ul>
+              ${skillsRows}
+            </ul>
+            <div class="ovr">OVR: ${p.ovr}</div>
+          </div>
+          <div class="charts">
+            <canvas id="radarChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer class="footer">SoccerSimulator — Profil zawodnika</footer>
+  </div>
+  <script>
+    const labels = ${labels};
+    const data = ${data};
+    new Chart(document.getElementById('radarChart').getContext('2d'),{
+      type:'radar',data:{labels,datasets:[{label:'Umiejętności',data,backgroundColor:'rgba(63,127,255,0.12)',borderColor:'rgba(63,127,255,0.9)',pointBackgroundColor:'rgba(63,127,255,0.9)'}]},options:{scales:{r:{beginAtZero:true,max:99}},plugins:{legend:{display:false}}}
+    });
+  </script>
+</body>
+</html>`;
+    return html;
+  }
+
+  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+  function avatarInitials(p){ const parts = p.name.split(' '); return ((parts[0]||'')[0]||'') + ((parts[1]||'')[0]||''); }
+
+  // reuse computeHiddenRange inside generated pages
+  function computeHiddenRange(potential, age, ovr){ const ageFactor = Math.max(0, age - 11); const spread = Math.max(6, 18 - ageFactor*1.5); let low = Math.max(1, potential - Math.round(spread + Math.random()*6)); let high = Math.min(99, potential + Math.round(Math.random()* (99-potential) )); const ovrBased = Math.floor(ovr); if(ovrBased > low) low = Math.min(ovrBased, potential); if(low > high) low = Math.max(1, high - 6); return {low, high}; }
+
+  function sortAndRenderAfterLoad(){ savePlayers(); renderList(); }
 
   // inicjalne dane - jeśli pusta lista, utwórz kilka przykładowych
   if(players.length===0){ for(let i=0;i<8;i++) players.push(generatePlayer()); savePlayers(); }

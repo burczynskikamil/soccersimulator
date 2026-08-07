@@ -6,6 +6,8 @@
   <title>League Manager — SoccerSimulator</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
   <div class="app">
@@ -15,6 +17,10 @@
         <button id="tab-dashboard" class="tab active">Dashboard</button>
         <button id="tab-players" class="tab">Lista zawodników</button>
       </nav>
+      <div class="top-actions">
+        <button id="save-json" class="btn">Save</button>
+        <label class="btn file">Load<input id="load-json" type="file" accept="application/json"/></label>
+      </div>
     </header>
     <main>
       <section id="dashboard" class="view">
@@ -28,8 +34,6 @@
         <div class="toolbar">
           <div>
             <button id="generate-player" class="btn primary">Generuj zawodnika</button>
-            <button id="export-json" class="btn">Eksportuj (.json)</button>
-            <label class="btn file">Importuj<input id="import-json" type="file" accept="application/json"/></label>
           </div>
           <div>
             <label>Filtruj kraj:
