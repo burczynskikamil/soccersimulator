@@ -1,4 +1,4 @@
-/* styles.css - prosty nowoczesny ciemny wygląd */
+/* styles.css - nowy wygląd z paskami umiejętności */
 :root{
   --bg:#071227;
   --card:#0e1622;
@@ -14,6 +14,7 @@ body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI'
 .topbar h1{margin:0;font-size:22px;color:var(--accent)}
 .topbar nav .tab{background:transparent;border:0;color:var(--muted);padding:8px 12px;border-radius:8px;margin-left:8px;cursor:pointer}
 .topbar nav .tab.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white}
+.top-actions{display:flex;gap:8px;align-items:center}
 main{flex:1;padding:24px}
 .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:18px;margin-bottom:18px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
 .card.big{min-height:260px;display:flex;align-items:center;justify-content:center}
@@ -30,6 +31,7 @@ th{color:var(--muted);cursor:pointer}
 .player-card .player-header{display:flex;gap:12px;align-items:center}
 .avatar{width:96px;height:96px;border-radius:12px;background:linear-gradient(90deg,#2b3348,#1f2a45);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:28px;color:white}
 .avatar.small{width:40px;height:40px;border-radius:8px;font-size:14px}
+.avatar-img{width:96px;height:96px;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,0.03)}
 .player-body{display:flex;gap:18px;margin-top:12px}
 .skills{width:360px}
 .skills ul{list-style:none;padding:0;margin:0}
@@ -43,3 +45,25 @@ th{color:var(--muted);cursor:pointer}
 .player-row{display:flex;align-items:center;gap:12px}
 .player-card .meta{color:var(--muted);font-size:13px;margin-top:6px}
 .link{color:var(--accent);text-decoration:none}
+
+/* Skills grid */
+.skills-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:12px}
+.skills-column{background:rgba(255,255,255,0.015);padding:10px;border-radius:10px}
+.skills-column h4{margin:0 0 8px 0;color:var(--muted)}
+.skill-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.skill-name{width:40%}
+.skill-bar{flex:1;height:12px;background:rgba(255,255,255,0.03);border-radius:8px;overflow:hidden}
+.skill-fill{height:100%;border-radius:8px}
+.skill-val{width:36px;text-align:right;font-weight:700}
+
+/* Color bands: we'll apply classes based on value */
+.color-veryhigh{background:linear-gradient(90deg,#a855f7,#7c3aed)} /* purple */
+.color-high-dark{background:#14532d} /* dark green */
+.color-high{background:#16a34a} /* green */
+.color-mid{background:#94a3b8} /* grey */
+.color-low{background:#facc15} /* yellow */
+.color-lower{background:#fb923c} /* orange */
+.color-bottom{background:#ef4444} /* red */
+
+/* responsive */
+@media (max-width:900px){.skills-grid{grid-template-columns:1fr;}}
