@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Podgląd zawodnika — SoccerSimulator</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <h1>Profil zawodnika</h1>
+      <nav>
+        <a class="link" href="/soccersimulator/docs/">← Powrót do listy</a>
+      </nav>
+    </header>
+    <main>
+      <div class="card player-card">
+        <div class="player-header">
+          <div class="avatar" id="pv-avatar"></div>
+          <div>
+            <h2 id="pv-name"></h2>
+            <div id="pv-country"></div>
+            <div class="meta">Wiek: <span id="pv-age"></span> — Potencjał: <span id="pv-potential"></span> (<span id="pv-hidden"></span>)</div>
+          </div>
+        </div>
+
+        <div class="player-body">
+          <div class="skills">
+            <h3>Umiejętności</h3>
+            <ul id="pv-skills"></ul>
+            <div class="ovr">OVR: <span id="pv-ovr"></span></div>
+          </div>
+          <div class="charts">
+            <canvas id="radarChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer class="footer">SoccerSimulator — Profil zawodnika</footer>
+  </div>
+
+  <script>
+    function qs(name){
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+    const id = qs('id');
+    const STORAGE_KEY = 'ss_players_v1';
+    const players = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const p = players.find(x=>x.id===id);
+    if(!p){ document.querySelector('main').innerHTML = '<div class="card"><h2>Nie znaleziono zawodnika</h2><p>Upewnij się, że otwierasz stronę z tej samej przeglądarki (dane są przechowywane w localStorage) albo użyj listy, aby otworzyć profil.</p></div>'; }
+    else{
+      document.getElementById('pv-name').textContent = p.name;
+      document.getElementById('pv-age').textContent = p.age;
+      document.getElementById('pv-potential').textContent = p.potential;
+      document.getElementById('pv-country').innerHTML = `<img class="flag" src="${p.countryFlag}"/> ${p.countryName}`;
+      document.getElementById('pv-avatar').textContent = (p.name.split(' ')[0][0] + (p.name.split(' ')[1] ? p.name.split(' ')[1][0] : '')).toUpperCase();
+      document.getElementById('pv-avatar').style.background = p.countryColor;
+      document.getElementById('pv-ovr').textContent = p.ovr;
+      const ul = document.getElementById('pv-skills'); ul.innerHTML=''; Object.keys(p.skills).forEach(k=>{ const li = document.createElement('li'); li.innerHTML = `<strong>${k}</strong><span>${p.skills[k]}</span>`; ul.appendChild(li); });
+      // radar
+      const ctx = document.getElementById('radarChart'); const labels = Object.keys(p.skills); const data = labels.map(k=>p.skills[k]); new Chart(ctx.getContext('2d'),{ type:'radar', data:{labels, datasets:[{label:'Umiejętności',data,backgroundColor:'rgba(63,127,255,0.12)',borderColor:'rgba(63,127,255,0.9)',pointBackgroundColor:'rgba(63,127,255,0.9)'}]}, options:{scales:{r:{beginAtZero:true,max:99}},plugins:{legend:{display:false}}} });
+    }
+  </script>
+</body>
+</html>

@@ -1,16 +1,16 @@
 // app.js - logika generowania zawodników, UI i persystencja
 (() => {
   const COUNTRIES = [
-    {code:'PL',name:'Polska',flag:'🇵🇱'},
-    {code:'NL',name:'Holandia',flag:'🇳🇱'},
-    {code:'GB',name:'Anglia',flag:'🏴'},
-    {code:'ES',name:'Hiszpania',flag:'🇪🇸'},
-    {code:'DE',name:'Niemcy',flag:'🇩🇪'},
-    {code:'PT',name:'Portugalia',flag:'🇵🇹'},
-    {code:'AR',name:'Argentyna',flag:'🇦🇷'},
-    {code:'BR',name:'Brazylia',flag:'🇧🇷'},
-    {code:'CN',name:'Chiny',flag:'🇨🇳'},
-    {code:'ZA',name:'RPA',flag:'🇿🇦'},
+    {code:'PL',name:'Polska',flag:'/soccersimulator/docs/assets/flags/pl.svg',color:'#ff4d4f'},
+    {code:'NL',name:'Holandia',flag:'/soccersimulator/docs/assets/flags/nl.svg',color:'#ff7a18'},
+    {code:'GB',name:'Anglia',flag:'/soccersimulator/docs/assets/flags/gb.svg',color:'#3f7fff'},
+    {code:'ES',name:'Hiszpania',flag:'/soccersimulator/docs/assets/flags/es.svg',color:'#ffb300'},
+    {code:'DE',name:'Niemcy',flag:'/soccersimulator/docs/assets/flags/de.svg',color:'#222831'},
+    {code:'PT',name:'Portugalia',flag:'/soccersimulator/docs/assets/flags/pt.svg',color:'#2db34a'},
+    {code:'AR',name:'Argentyna',flag:'/soccersimulator/docs/assets/flags/ar.svg',color:'#4ea8de'},
+    {code:'BR',name:'Brazylia',flag:'/soccersimulator/docs/assets/flags/br.svg',color:'#1fbf4a'},
+    {code:'CN',name:'Chiny',flag:'/soccersimulator/docs/assets/flags/cn.svg',color:'#e63946'},
+    {code:'ZA',name:'RPA',flag:'/soccersimulator/docs/assets/flags/za.svg',color:'#f77f00'},
   ];
 
   // przykładowe imiona i nazwiska (rozszerzalne) — staramy się unikać duplikatów
@@ -90,11 +90,12 @@
       });
     }
 
-    const ovr = Object.values(skills).reduce((a,b)=>a+b,0);
-    const hiddenRange = computeHiddenRange(potential,age,ovr);
+    // OVR jako średnia umiejętności, maksymalnie 99
+    const sum = Object.values(skills).reduce((a,b)=>a+b,0);
+    const ovr = Math.min(99, Math.round(sum / Object.values(skills).length));
 
     return {
-      id, name, age, country: country.code, countryName: country.name, countryFlag: country.flag, isGK, potential, skills, ovr, created: Date.now()
+      id, name, age, country: country.code, countryName: country.name, countryFlag: country.flag, countryColor: country.color, isGK, potential, skills, ovr, created: Date.now()
     };
   }
 
@@ -113,14 +114,13 @@
   }
 
   function initialSkillForPotential(potential){
-    // startowe umiejętności max ~60. Duży potencjał daje większe szanse na wyższe startowe, ale nie gwarantuje.
-    const maxStart = 60;
+    // startowe umiejętności: dopuszczamy skalę do 99 (rzadkie) — większy potencjał zwiększa prawdopodobieństwo wyższych startów
+    const maxStart = 99;
     const minBase = Math.max(1, Math.round(potential*0.2 - 12));
     const maxBase = Math.min(maxStart, Math.round(potential*0.7 + 6));
-    // allow low values also
     const val = randInt(minBase, maxBase);
     // small random perturbation
-    return Math.max(1, Math.min(maxStart, val + randInt(-6,6)));
+    return Math.max(1, Math.min(maxStart, val + randInt(-8,8)));
   }
 
   function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
@@ -128,11 +128,11 @@
   function computeHiddenRange(potential, age, ovr){
     // pokazujemy przybliżony potencjał jako zakres. Z wiekiem zakres zawęża się.
     const ageFactor = Math.max(0, age - 11);
-    const spread = Math.max(8, 18 - ageFactor*1.5); // młody = większy spread
+    const spread = Math.max(6, 18 - ageFactor*1.5); // młody = większy spread
     let low = Math.max(1, potential - Math.round(spread + Math.random()*6));
     let high = Math.min(99, potential + Math.round(Math.random()* (99-potential) ));
     // jeżeli umiejętności (ovr) już przekraczają dolną wartość -> zawężamy
-    const ovrBased = Math.floor(ovr * 0.6);
+    const ovrBased = Math.floor(ovr);
     if(ovrBased > low) low = Math.min(ovrBased, potential);
     if(low > high) low = Math.max(1, high - 6);
     return {low, high};
@@ -140,15 +140,13 @@
 
   function generateUniqueName(countryCode, existing){
     const pool = NAME_POOL[countryCode] || NAME_POOL['PL'];
-    // try combinations, avoid duplicates in existing players
     const existingNames = new Set(existing.map(p=>p.name));
-    for(let i=0;i<200;i++){
+    for(let i=0;i<500;i++){
       const first = sample(pool.first);
       const last = sample(pool.last);
       const candidate = first + ' ' + last;
       if(!existingNames.has(candidate)) return candidate;
     }
-    // fallback with random suffix
     return sample(pool.first) + ' ' + sample(pool.last) + ' ' + Math.floor(Math.random()*9999);
   }
 
@@ -169,9 +167,9 @@
     list.forEach(p=>{
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><div style="display:flex;gap:8px;align-items:center"><div class="avatar small">${avatarText(p)}</div><div>${p.name}</div></div></td>
+        <td><div class="player-row"><div class="avatar small" style="background:${p.countryColor}">${avatarText(p)}</div><div><div><a class="link" href="/soccersimulator/docs/player.html?id=${p.id}">${p.name}</a></div><div class="meta">${p.countryName}</div></div></div></td>
         <td>${p.age}</td>
-        <td>${flagFor(p.country)} ${p.countryName}</td>
+        <td><img class="flag" src="${p.countryFlag}" alt="${p.countryName}"/> ${p.countryName}</td>
         <td>${p.ovr}</td>
         <td>${displayHidden(p)}</td>
         <td>${p.skills['Odbiór'] || '-'}</td>
@@ -179,84 +177,38 @@
         <td>${p.skills['Podanie'] || '-'}</td>
         <td>${p.skills['Wizja'] || '-'}</td>
         <td>${p.skills['Szybkość'] || '-'}</td>
-        <td><button class="btn" data-id="${p.id}">Podgląd</button></td>
+        <td><button class="btn" data-id="${p.id}">Podgląd</button> <button class="btn" data-delete="${p.id}" style="background:#ff4d4f;color:white;border:0">Usuń</button></td>
       `;
-      tr.querySelector('button').addEventListener('click',(e)=>{ showPlayer(p.id); });
+      tr.querySelector('button[data-id]')?.addEventListener('click',()=>{ showPlayer(p.id); });
+      tr.querySelector('button[data-delete]')?.addEventListener('click',()=>{ if(confirm('Usuń zawodnika '+p.name+'?')){ deletePlayer(p.id); } });
       $table.appendChild(tr);
     });
   }
 
-  function avatarText(p){ // inicjały
-    const parts = p.name.split(' ');
-    const initials = (parts[0][0] || '') + (parts[1] ? parts[1][0] : '');
-    return initials.toUpperCase();
-  }
+  function deletePlayer(id){ players = players.filter(p=>p.id!==id); savePlayers(); renderList(); showTab('players'); }
+
+  function avatarText(p){ const parts = p.name.split(' '); const initials = (parts[0][0] || '') + (parts[1] ? parts[1][0] : ''); return initials.toUpperCase(); }
 
   function flagFor(code){ const c = COUNTRIES.find(x=>x.code===code); return c?c.flag:''; }
 
-  function displayHidden(p){
-    const hidden = computeHiddenRange(p.potential, p.age, p.ovr);
-    // cache? we compute on the fly. Show e.g. 78–99
-    return hidden.low + '–' + hidden.high;
-  }
+  function displayHidden(p){ const hidden = computeHiddenRange(p.potential, p.age, p.ovr); return hidden.low + '–' + hidden.high; }
 
-  function showPlayer(id){
-    const p = players.find(x=>x.id===id); if(!p) return;
-    showTab('player-view');
-    document.getElementById('pv-name').textContent = p.name;
-    document.getElementById('pv-age').textContent = p.age;
-    document.getElementById('pv-potential').textContent = p.potential;
-    document.getElementById('pv-country').textContent = `${flagFor(p.country)} ${p.countryName}`;
-    document.getElementById('pv-avatar').textContent = avatarText(p);
-    document.getElementById('pv-ovr').textContent = p.ovr;
-    // hidden
-    const h = computeHiddenRange(p.potential, p.age, p.ovr);
-    document.getElementById('pv-hidden').textContent = `${h.low}–${h.high}`;
-
-    const ul = document.getElementById('pv-skills'); ul.innerHTML='';
-    Object.keys(p.skills).forEach(k=>{
-      const li = document.createElement('li'); li.innerHTML = `<strong>${k}</strong><span>${p.skills[k]}</span>`; ul.appendChild(li);
-    });
-
-    // radar chart
-    renderRadar(p);
-  }
+  function showPlayer(id){ const p = players.find(x=>x.id===id); if(!p) return; showTab('player-view'); document.getElementById('pv-name').textContent = p.name; document.getElementById('pv-age').textContent = p.age; document.getElementById('pv-potential').textContent = p.potential; document.getElementById('pv-country').innerHTML = `<img class="flag" src="${p.countryFlag}"/> ${p.countryName}`; document.getElementById('pv-avatar').textContent = avatarText(p); document.getElementById('pv-avatar').style.background = p.countryColor; document.getElementById('pv-ovr').textContent = p.ovr; const h = computeHiddenRange(p.potential, p.age, p.ovr); document.getElementById('pv-hidden').textContent = `${h.low}–${h.high}`; const ul = document.getElementById('pv-skills'); ul.innerHTML=''; Object.keys(p.skills).forEach(k=>{ const li = document.createElement('li'); li.innerHTML = `<strong>${k}</strong><span>${p.skills[k]}</span>`; ul.appendChild(li); }); document.getElementById('pv-permalink').href = `/soccersimulator/docs/player.html?id=${p.id}`; document.getElementById('pv-delete').onclick = ()=>{ if(confirm('Usuń zawodnika '+p.name+'?')) deletePlayer(p.id); }; renderRadar(p); }
 
   let radarChart = null;
-  function renderRadar(p){
-    const ctx = document.getElementById('radarChart');
-    const labels = Object.keys(p.skills);
-    const data = labels.map(k=>p.skills[k]);
-    if(radarChart) radarChart.destroy();
-    radarChart = new Chart(ctx.getContext('2d'),{
-      type:'radar',
-      data:{labels, datasets:[{label:'Umiejętności',data,backgroundColor:'rgba(123,103,255,0.15)',borderColor:'rgba(123,103,255,0.9)',pointBackgroundColor:'rgba(123,103,255,0.9)'}]},
-      options:{scales:{r:{beginAtZero:true,max:100}},plugins:{legend:{display:false}}}
-    });
-  }
+  function renderRadar(p){ const ctx = document.getElementById('radarChart'); const labels = Object.keys(p.skills); const data = labels.map(k=>p.skills[k]); if(radarChart) radarChart.destroy(); radarChart = new Chart(ctx.getContext('2d'),{ type:'radar', data:{labels, datasets:[{label:'Umiejętności',data,backgroundColor:'rgba(63,127,255,0.12)',borderColor:'rgba(63,127,255,0.9)',pointBackgroundColor:'rgba(63,127,255,0.9)'}]}, options:{scales:{r:{beginAtZero:true,max:99}},plugins:{legend:{display:false}}} }); }
 
   // simple sorting
   let lastSort = {k:'created',dir:-1};
-  function sortBy(k){
-    if(lastSort.k===k) lastSort.dir *= -1; else { lastSort.k = k; lastSort.dir = 1; }
-    players.sort((a,b)=>{
-      let va = getSortValue(a,k); let vb = getSortValue(b,k);
-      if(typeof va === 'string') return va.localeCompare(vb) * lastSort.dir;
-      return (va - vb) * lastSort.dir;
-    });
-    renderList();
-  }
+  function sortBy(k){ if(lastSort.k===k) lastSort.dir *= -1; else { lastSort.k = k; lastSort.dir = 1; } players.sort((a,b)=>{ let va = getSortValue(a,k); let vb = getSortValue(b,k); if(typeof va === 'string') return va.localeCompare(vb) * lastSort.dir; return (va - vb) * lastSort.dir; }); renderList(); }
   function getSortValue(p,k){ if(k==='name') return p.name; if(k==='age') return p.age; if(k==='country') return p.countryName; if(k==='ovr') return p.ovr; if(k==='potential') return p.potential; return p.skills && p.skills[k.charAt(0).toUpperCase()+k.slice(1)] || 0; }
 
   function exportJSON(){ const data = JSON.stringify(players, null, 2); const blob = new Blob([data],{type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download = 'players_export.json'; a.click(); URL.revokeObjectURL(url); }
-  function importJSON(e){ const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ()=>{ try{ const imported = JSON.parse(r.result); if(Array.isArray(imported)){ // merge, avoid id collisions
-        const ids = new Set(players.map(p=>p.id));
-        imported.forEach(p=>{ if(!p.id) p.id = uid(); while(ids.has(p.id)){ p.id = uid(); } ids.add(p.id); players.push(p); }); savePlayers(); renderList(); alert('Zaimportowano: '+imported.length+' zawodników'); } else alert('Plik nie jest listą zawodników'); } catch(err){ alert('Błąd odczytu pliku'); } }; r.readAsText(f); e.target.value=''; }
+  function importJSON(e){ const f = e.target.files[0]; if(!f) return; const r = new FileReader(); r.onload = ()=>{ try{ const imported = JSON.parse(r.result); if(Array.isArray(imported)){ const ids = new Set(players.map(p=>p.id)); imported.forEach(p=>{ if(!p.id) p.id = uid(); while(ids.has(p.id)){ p.id = uid(); } ids.add(p.id); players.push(p); }); savePlayers(); renderList(); alert('Zaimportowano: '+imported.length+' zawodników'); } else alert('Plik nie jest listą zawodników'); } catch(err){ alert('Błąd odczytu pliku'); } }; r.readAsText(f); e.target.value=''; }
 
   // inicjalne dane - jeśli pusta lista, utwórz kilka przykładowych
-  if(players.length===0){ for(let i=0;i<6;i++) players.push(generatePlayer()); savePlayers(); }
+  if(players.length===0){ for(let i=0;i<8;i++) players.push(generatePlayer()); savePlayers(); }
 
-  init();
-  renderList();
+  init(); renderList();
 
 })();
