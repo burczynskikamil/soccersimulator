@@ -1,0 +1,40 @@
+/* styles.css - prosty nowoczesny ciemny wygląd */
+:root{
+  --bg:#0f1720;
+  --card:#0f1924;
+  --muted:#94a3b8;
+  --accent:#6b8cff;
+  --accent-2:#7c3aed;
+  --glass: rgba(255,255,255,0.03);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial;color:#e6eef8;background:linear-gradient(180deg,#081019 0%,#07101a 100%);}
+.app{min-height:100vh;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 28px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.topbar h1{margin:0;font-size:20px}
+.topbar nav .tab{background:transparent;border:0;color:var(--muted);padding:8px 12px;border-radius:8px;margin-left:8px;cursor:pointer}
+.topbar nav .tab.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white}
+main{flex:1;padding:24px}
+.card{background:var(--card);border-radius:12px;padding:18px;margin-bottom:18px;box-shadow:0 4px 20px rgba(2,6,23,0.6)}
+.card.big{min-height:240px;display:flex;align-items:center;justify-content:center}
+.toolbar{display:flex;justify-content:space-between;margin-bottom:12px;gap:12px}
+.btn{background:var(--glass);border:1px solid rgba(255,255,255,0.03);color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer}
+.btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;border:0}
+.btn.file{position:relative;overflow:hidden}
+.btn.file input{position:absolute;left:0;top:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px 8px;border-bottom:1px solid rgba(255,255,255,0.02);text-align:left}
+th{color:var(--muted);cursor:pointer}
+.hidden{display:none}
+.player-card .player-header{display:flex;gap:12px;align-items:center}
+.avatar{width:96px;height:96px;border-radius:12px;background:linear-gradient(90deg,#2b3348,#1f2a45);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:28px;color:white}
+.player-body{display:flex;gap:18px;margin-top:12px}
+.skills{width:360px}
+.skills ul{list-style:none;padding:0;margin:0}
+.skills li{display:flex;justify-content:space-between;padding:6px 8px;background:rgba(255,255,255,0.01);margin-bottom:6px;border-radius:6px}
+.ovr{margin-top:10px;font-weight:700}
+.charts{flex:1}
+.footer{padding:14px 28px;border-top:1px solid rgba(255,255,255,0.02);color:var(--muted)}
+.player-header h2{margin:0}
+#pv-country{color:var(--muted);margin-top:6px}

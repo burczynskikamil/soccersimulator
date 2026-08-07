@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>League Manager — SoccerSimulator</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <h1>League Manager</h1>
+      <nav>
+        <button id="tab-dashboard" class="tab active">Dashboard</button>
+        <button id="tab-players" class="tab">Lista zawodników</button>
+      </nav>
+    </header>
+    <main>
+      <section id="dashboard" class="view">
+        <div class="card big">
+          <h2>Dashboard</h2>
+          <p>Panel w przygotowaniu — tutaj później pojawią się statystyki lig, wykresy i skróty.</p>
+        </div>
+      </section>
+
+      <section id="players" class="view hidden">
+        <div class="toolbar">
+          <div>
+            <button id="generate-player" class="btn primary">Generuj zawodnika</button>
+            <button id="export-json" class="btn">Eksportuj (.json)</button>
+            <label class="btn file">Importuj<input id="import-json" type="file" accept="application/json"/></label>
+          </div>
+          <div>
+            <label>Filtruj kraj:
+              <select id="filter-country"><option value="">Wszystkie</option></select>
+            </label>
+            <label>Wyszukaj: <input id="search" placeholder="Imię lub nazwisko" /></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Lista zawodników</h2>
+          <div class="table-wrap">
+            <table id="players-table">
+              <thead>
+                <tr>
+                  <th data-sort="name">Zawodnik</th>
+                  <th data-sort="age">Wiek</th>
+                  <th data-sort="country">Kraj</th>
+                  <th data-sort="ovr">OVR</th>
+                  <th data-sort="potential">Potencjał (ukryty)</th>
+                  <th data-sort="odbior">Odbiór</th>
+                  <th data-sort="krycie">Krycie</th>
+                  <th data-sort="podanie">Podanie</th>
+                  <th data-sort="wizja">Wizja</th>
+                  <th data-sort="szybkosc">Szybkość</th>
+                  <th>Akcje</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="player-view" class="view hidden">
+        <div class="card player-card">
+          <button id="back-to-list" class="btn">← Wróć</button>
+          <div class="player-header">
+            <div class="avatar" id="pv-avatar"></div>
+            <div>
+              <h2 id="pv-name"></h2>
+              <div id="pv-country"></div>
+              <div>Wiek: <span id="pv-age"></span> — Potencjał: <span id="pv-potential"></span> (<span id="pv-hidden"></span>)</div>
+            </div>
+          </div>
+
+          <div class="player-body">
+            <div class="skills">
+              <h3>Umiejętności</h3>
+              <ul id="pv-skills"></ul>
+              <div class="ovr">OVR: <span id="pv-ovr"></span></div>
+            </div>
+            <div class="charts">
+              <canvas id="radarChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer">SoccerSimulator — League Manager • statyczna aplikacja na GitHub Pages</footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
