@@ -47,12 +47,32 @@
     }
   };
 
-  // Tier probabilities by position
+  // Tier probabilities
   const TIER_PROBABILITIES = {
-    'ST': { tier1: 0.4, tier2: 0.25, tier3: 0.2, tier4: 0.1, tier5: 0.05 },
-    'CM': { tier1: 0.4, tier2: 0.25, tier3: 0.2, tier4: 0.1, tier5: 0.05 },
-    'CB': { tier1: 0.4, tier2: 0.25, tier3: 0.2, tier4: 0.1, tier5: 0.05 },
-    'GK': { tier1: 1.0 }
+    'ST': [
+      { tier: 'tier1', prob: 0.40 },
+      { tier: 'tier2', prob: 0.25 },
+      { tier: 'tier3', prob: 0.20 },
+      { tier: 'tier4', prob: 0.10 },
+      { tier: 'tier5', prob: 0.05 }
+    ],
+    'CM': [
+      { tier: 'tier1', prob: 0.40 },
+      { tier: 'tier2', prob: 0.25 },
+      { tier: 'tier3', prob: 0.20 },
+      { tier: 'tier4', prob: 0.10 },
+      { tier: 'tier5', prob: 0.05 }
+    ],
+    'CB': [
+      { tier: 'tier1', prob: 0.40 },
+      { tier: 'tier2', prob: 0.25 },
+      { tier: 'tier3', prob: 0.20 },
+      { tier: 'tier4', prob: 0.10 },
+      { tier: 'tier5', prob: 0.05 }
+    ],
+    'GK': [
+      { tier: 'tier1', prob: 1.0 }
+    ]
   };
 
   // Height generation weights by position (cm ranges)
@@ -167,32 +187,45 @@
     return { min: minHidden, max: maxHidden };
   }
 
-  function getTierFromProbability(position) {
+  function getTierByProbability(position) {
     const probs = TIER_PROBABILITIES[position];
     const rand = Math.random();
     let cumulative = 0;
 
-    for (let tier in probs) {
-      cumulative += probs[tier];
+    for (let tierObj of probs) {
+      cumulative += tierObj.prob;
       if (rand <= cumulative) {
-        return tier;
+        return tierObj.tier;
       }
     }
-    return 'tier1'; // fallback
+    return probs[0].tier; // fallback
   }
 
   function generateSkills(ovr, position) {
     const skills = {};
     const skillTiers = POSITION_SKILLS[position];
     
-    // Calculate number of draws
+    // Calculate points pool
     const multiplier = position === 'GK' ? 3 : 11;
-    const numDraws = ovr * multiplier;
+    const totalPoints = ovr * multiplier;
 
-    // For each draw
-    for (let i = 0; i < numDraws; i++) {
-      // Select tier based on probabilities
-      const tier = getTierFromProbability(position);
+    // Get all available skills for this position
+    let allSkills = [];
+    const tierOrder = ['tier1', 'tier2', 'tier3', 'tier4', 'tier5'];
+    for (const tierName of tierOrder) {
+      const tierSkills = skillTiers[tierName] || [];
+      allSkills = allSkills.concat(tierSkills);
+    }
+
+    // Initialize all skills to 0
+    allSkills.forEach(skill => {
+      skills[skill] = 0;
+    });
+
+    // Distribute points
+    for (let i = 0; i < totalPoints; i++) {
+      // Select tier by probability
+      const tier = getTierByProbability(position);
       const tierSkills = skillTiers[tier] || [];
 
       if (tierSkills.length === 0) continue;
@@ -200,17 +233,9 @@
       // Select random skill from that tier
       const skill = tierSkills[Math.floor(Math.random() * tierSkills.length)];
 
-      // Generate skill value based on OVR
-      const baseSkill = Math.round((ovr / 60) * 99);
-      const variance = randInt(-8, 8);
-      const skillValue = Math.max(1, Math.min(99, baseSkill + variance));
-
-      // Add or update skill
-      if (skills[skill]) {
-        // Average the values if skill already exists
-        skills[skill] = Math.round((skills[skill] + skillValue) / 2);
-      } else {
-        skills[skill] = skillValue;
+      // Add 1 point to skill
+      if (skill in skills) {
+        skills[skill]++;
       }
     }
 
