@@ -50,13 +50,10 @@ async function savePlayers(players) {
   if (!supabaseClient) await initSupabase();
   
   try {
-    // Delete all existing players
-    await supabaseClient.from('players').delete().neq('id', '');
-    
-    // Insert new players
+    // Upsert players (insert or update based on id)
     const { error } = await supabaseClient
       .from('players')
-      .insert(
+      .upsert(
         players.map(p => ({
           id: p.id,
           name: p.name,
@@ -75,7 +72,8 @@ async function savePlayers(players) {
           value: p.value || 0,
           team_id: p.teamId || null,
           skills: p.skills
-        }))
+        })),
+        { onConflict: 'id' }
       );
     
     if (error) throw error;
@@ -148,13 +146,10 @@ async function saveTeams(teams) {
   if (!supabaseClient) await initSupabase();
   
   try {
-    // Delete all existing teams
-    await supabaseClient.from('teams').delete().neq('id', '');
-    
-    // Insert new teams
+    // Upsert teams (insert or update based on id)
     const { error } = await supabaseClient
       .from('teams')
-      .insert(
+      .upsert(
         teams.map(t => ({
           id: t.id,
           name: t.name,
@@ -164,7 +159,8 @@ async function saveTeams(teams) {
           logo: t.logo || null,
           budget: t.budget || 1000000,
           created_at: new Date(t.created).toISOString()
-        }))
+        })),
+        { onConflict: 'id' }
       );
     
     if (error) throw error;
