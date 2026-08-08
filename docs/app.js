@@ -21,46 +21,46 @@
     'GK': 'Bramkarz'
   };
 
-  // Position-based skill probabilities (each skill has individual percentage)
+  // Position-based skill probabilities (each skill has individual percentage, totaling 100%)
   const SKILL_PROBABILITIES = {
     'ST': [
-      { skill: 'Strzały', prob: 0.05 },
-      { skill: 'Główki', prob: 0.05 },
-      { skill: 'Siła', prob: 0.04 },
-      { skill: 'Szybkość', prob: 0.04 },
-      { skill: 'Kondycja', prob: 0.04 },
-      { skill: 'Drybling', prob: 0.03 },
-      { skill: 'Przyspieszenie', prob: 0.03 },
-      { skill: 'Podanie', prob: 0.02 },
-      { skill: 'Wizja', prob: 0.02 },
-      { skill: 'Odbiór', prob: 0.01 },
-      { skill: 'Krycie', prob: 0.01 }
+      { skill: 'Strzały', prob: 0.10 },
+      { skill: 'Główki', prob: 0.10 },
+      { skill: 'Siła', prob: 0.09 },
+      { skill: 'Szybkość', prob: 0.09 },
+      { skill: 'Kondycja', prob: 0.09 },
+      { skill: 'Drybling', prob: 0.08 },
+      { skill: 'Przyspieszenie', prob: 0.08 },
+      { skill: 'Podanie', prob: 0.07 },
+      { skill: 'Wizja', prob: 0.07 },
+      { skill: 'Odbiór', prob: 0.03 },
+      { skill: 'Krycie', prob: 0.03 }
     ],
     'CM': [
-      { skill: 'Podanie', prob: 0.05 },
-      { skill: 'Wizja', prob: 0.05 },
-      { skill: 'Kondycja', prob: 0.04 },
-      { skill: 'Szybkość', prob: 0.04 },
-      { skill: 'Drybling', prob: 0.04 },
-      { skill: 'Odbiór', prob: 0.03 },
-      { skill: 'Przyspieszenie', prob: 0.03 },
-      { skill: 'Strzały', prob: 0.03 },
-      { skill: 'Krycie', prob: 0.02 },
-      { skill: 'Główki', prob: 0.02 },
-      { skill: 'Siła', prob: 0.02 }
+      { skill: 'Podanie', prob: 0.10 },
+      { skill: 'Wizja', prob: 0.10 },
+      { skill: 'Kondycja', prob: 0.09 },
+      { skill: 'Szybkość', prob: 0.09 },
+      { skill: 'Drybling', prob: 0.09 },
+      { skill: 'Odbiór', prob: 0.08 },
+      { skill: 'Przyspieszenie', prob: 0.08 },
+      { skill: 'Strzały', prob: 0.08 },
+      { skill: 'Krycie', prob: 0.06 },
+      { skill: 'Główki', prob: 0.06 },
+      { skill: 'Siła', prob: 0.06 }
     ],
     'CB': [
-      { skill: 'Odbiór', prob: 0.05 },
-      { skill: 'Krycie', prob: 0.05 },
-      { skill: 'Siła', prob: 0.04 },
-      { skill: 'Szybkość', prob: 0.04 },
-      { skill: 'Główki', prob: 0.04 },
-      { skill: 'Podanie', prob: 0.03 },
-      { skill: 'Przyspieszenie', prob: 0.03 },
-      { skill: 'Wizja', prob: 0.03 },
-      { skill: 'Strzały', prob: 0.02 },
-      { skill: 'Drybling', prob: 0.02 },
-      { skill: 'Kondycja', prob: 0.02 }
+      { skill: 'Odbiór', prob: 0.10 },
+      { skill: 'Krycie', prob: 0.10 },
+      { skill: 'Siła', prob: 0.09 },
+      { skill: 'Szybkość', prob: 0.09 },
+      { skill: 'Główki', prob: 0.09 },
+      { skill: 'Podanie', prob: 0.08 },
+      { skill: 'Przyspieszenie', prob: 0.08 },
+      { skill: 'Wizja', prob: 0.08 },
+      { skill: 'Strzały', prob: 0.05 },
+      { skill: 'Drybling', prob: 0.05 },
+      { skill: 'Kondycja', prob: 0.05 }
     ],
     'GK': [
       { skill: 'Sam na sam', prob: 0.3333 },
