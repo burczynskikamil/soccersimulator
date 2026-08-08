@@ -172,7 +172,6 @@
   function generateHeight(position) {
     const range = HEIGHT_RANGES[position];
     const avg = range.avg;
-    // Gaussian distribution around average
     let u1 = Math.random();
     let u2 = Math.random();
     let z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
@@ -181,7 +180,6 @@
   }
 
   function generatePotential() {
-    // Gaussian distribution centered around 65
     let u1 = Math.random();
     let u2 = Math.random();
     let z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
@@ -190,115 +188,56 @@
   }
 
   function generateOVR(potential) {
-    // OVR is random between 20-60
-    // Higher potential gives better chance at higher OVR
     const minOVR = 20;
     const maxOVR = 60;
-    
-    // Calculate probability curve - higher potential = more likely to get higher OVR
-    const potentialRatio = (potential - 30) / (99 - 30); // 0 to 1
+    const potentialRatio = (potential - 30) / (99 - 30);
     const expectedOVR = minOVR + (maxOVR - minOVR) * potentialRatio;
-    
-    // Add variance around expected OVR
     const variance = randInt(-8, 8);
     const ovr = expectedOVR + variance;
-    
     return Math.max(minOVR, Math.min(maxOVR, Math.round(ovr)));
   }
 
   function generateHiddenPotentialRange(realPotential) {
-    // Range is typically ±10 around real potential
     const spread = 10;
     const minHidden = Math.max(30, realPotential - spread);
     const maxHidden = Math.min(99, realPotential + spread);
     return { min: minHidden, max: maxHidden };
   }
 
-  let debugLogCount = 0;
-  let probsLogged = false;
-
-  function getSkillByProbability(position) {
-    const probs = SKILL_PROBABILITIES[position];
-    
-    // Log probabilities once
-    if (!probsLogged) {
-      console.log(`[DEBUG_PROBS_${position}]`, probs.map(s => `${s.skill}: ${s.prob}`).join(', '));
-      probsLogged = true;
-    }
-    
+  function getSkillByProbability(probabilities) {
     const rand = Math.random();
     let cumulative = 0;
-
-    for (let skillObj of probs) {
+    
+    for (let skillObj of probabilities) {
       cumulative += skillObj.prob;
-      
-      // Log first 5 selections for debugging
-      if (debugLogCount < 5) {
-        console.log(`[PROB_TEST] Rand: ${rand.toFixed(4)}, Cumulative before: ${(cumulative - skillObj.prob).toFixed(4)}, Current: ${cumulative.toFixed(4)}, Skill: ${skillObj.skill}, Match: ${rand <= cumulative}`);
-      }
-      
       if (rand <= cumulative) {
-        if (debugLogCount < 5) {
-          console.log(`[PROB_TEST] ✓✓✓ SELECTED: ${skillObj.skill}`);
-          debugLogCount++;
-        }
         return skillObj.skill;
       }
     }
-    return probs[0].skill; // fallback
+    
+    // Fallback - shouldn't happen if probabilities sum to 1
+    return probabilities[probabilities.length - 1].skill;
   }
 
   function generateSkills(ovr, position) {
-    console.log(`[SKILL_GEN] Starting skill generation for ${position} (OVR: ${ovr})`);
-    probsLogged = false;
-    debugLogCount = 0;
-    
+    // Initialize skills object with all skills for this position set to 0
     const skills = {};
-    const skillTiers = POSITION_SKILLS[position];
+    const probs = SKILL_PROBABILITIES[position];
     
-    // Initialize all skills to 0
-    let allSkills = [];
-    const tierOrder = ['tier1', 'tier2', 'tier3', 'tier4', 'tier5'];
-    for (const tierName of tierOrder) {
-      const tierSkills = skillTiers[tierName] || [];
-      allSkills = allSkills.concat(tierSkills);
+    // Set all skills to 0
+    for (let skillObj of probs) {
+      skills[skillObj.skill] = 0;
     }
 
-    allSkills.forEach(skill => {
-      skills[skill] = 0;
-    });
-
-    // Calculate total points to distribute
+    // Calculate total points
     const multiplier = position === 'GK' ? 3 : 11;
     const totalPoints = ovr * multiplier;
 
-    console.log(`[SKILL_GEN] Total points to distribute: ${totalPoints}`);
-    console.log(`[SKILL_GEN] Expected breakdown:`);
-    SKILL_PROBABILITIES[position].forEach(s => {
-      const expected = (totalPoints * s.prob).toFixed(1);
-      console.log(`[SKILL_GEN]   ${s.skill}: ${(s.prob * 100).toFixed(1)}% = ~${expected} points`);
-    });
-
-    // Distribute points one by one
+    // Distribute points one by one using probability-weighted selection
     for (let i = 0; i < totalPoints; i++) {
-      // Select skill by probability
-      const skill = getSkillByProbability(position);
-
-      // Add 1 point to skill
-      if (skill in skills) {
-        skills[skill]++;
-        if (i < 20) {
-          console.log(`[POINT_${i}] Adding to "${skill}", now: ${skills[skill]}`);
-        }
-      } else {
-        console.log(`[ERROR_${i}] Skill "${skill}" NOT in skills object! Available: ${Object.keys(skills).join(', ')}`);
-      }
+      const selectedSkill = getSkillByProbability(probs);
+      skills[selectedSkill]++;
     }
-
-    console.log(`[SKILL_GEN] Actual distribution:`);
-    SKILL_PROBABILITIES[position].forEach(s => {
-      console.log(`[SKILL_GEN]   ${s.skill}: ${skills[s.skill] || 0} points`);
-    });
 
     return skills;
   }
@@ -315,8 +254,6 @@
   }
 
   function generatePlayer(){
-    console.log('%c=== GENERATING NEW PLAYER ===', 'color: #00ff00; font-weight: bold;');
-    
     const age = 11;
     const country = sample(COUNTRIES);
     const position = sample(POSITIONS);
@@ -336,13 +273,10 @@
       growth, skills, created: Date.now()
     };
     
-    console.log('%cPlayer created: ' + name, 'color: #00ff00; font-weight: bold;');
-    
     return player;
   }
 
   async function generateAndSave(){
-    console.log('%c>>> GENERATE AND SAVE CLICKED <<<', 'color: #ff00ff; font-weight: bold; font-size: 14px;');
     const p = generatePlayer();
     players.push(p);
     await window.db.savePlayers(players);
@@ -418,7 +352,6 @@
       console.error('Player not found:', id);
       return;
     }
-    console.log('Showing player:', p);
     showTab('player-view');
     el('pv-name').textContent = p.name;
     el('pv-age').textContent = p.age;
@@ -429,15 +362,11 @@
     el('pv-ovr').textContent = p.ovr;
     el('pv-growth').textContent = p.growth.toFixed(2) + '/1.0';
     const grid = el('pv-skills-grid');
-    if(!grid) {
-      console.error('Skills grid not found');
-      return;
-    }
+    if(!grid) return;
     grid.innerHTML='';
 
     const skillTiers = POSITION_SKILLS[p.position];
     
-    // For GK - only show tier1
     if (p.position === 'GK') {
       const tierSkills = skillTiers.tier1 || [];
       if (tierSkills.length > 0) {
@@ -446,7 +375,6 @@
       return;
     }
 
-    // For other positions - show tiers in order
     const tierOrder = [
       { name: 'tier1', label: '★★★ Top Tier' },
       { name: 'tier2', label: '★★ Ważne' },
@@ -512,7 +440,6 @@
     return p.skills[k] || 0;
   }
 
-  // Expose functions globally for onclick handlers
   window.showPlayerDetail = showPlayer;
   window.deletePlayerConfirm = (id, name) => {
     if(confirm(`Usuń zawodnika ${name}?`)) {
