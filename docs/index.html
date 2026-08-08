@@ -99,12 +99,11 @@
               <thead>
                 <tr>
                   <th>Logo</th>
-                  <th>Nazwa</th>
+                  <th>Drużyna</th>
                   <th>Kraj</th>
                   <th>Zawodnicy</th>
                   <th>Budżet</th>
-                  <th>Wartość Drużyny</th>
-                  <th>Akcja</th>
+                  <th>Akcje</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -113,58 +112,31 @@
         </div>
       </section>
 
-      <!-- TEAM CREATE -->
-      <section id="team-create" class="view hidden">
-        <div class="card">
-          <button id="back-to-teams" class="btn btn-back">← Wróć do drużyn</button>
-          <h2>Utwórz Drużynę</h2>
-
-          <div class="form-group">
-            <label>Nazwa Drużyny</label>
-            <input type="text" id="team-name" class="form-input" placeholder="np. Manchester United" />
-          </div>
-
-          <div class="form-group">
-            <label>Kraj</label>
-            <select id="team-country" class="form-input"></select>
-          </div>
-
-          <div class="form-group">
-            <label>Logo Drużyny</label>
-            <input type="file" id="team-logo" accept="image/*" class="form-input" />
-          </div>
-
-          <div class="form-actions">
-            <button id="team-form-submit" class="btn primary">Utwórz Drużynę</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- TEAM DETAIL -->
+      <!-- TEAM DETAIL VIEW -->
       <section id="team-detail" class="view hidden">
         <div class="card">
-          <button id="back-to-teams-detail" class="btn btn-back">← Wróć do drużyn</button>
+          <button id="back-to-teams" class="btn btn-back">← Wróć do drużyn</button>
 
           <div class="team-header">
-            <img id="team-detail-logo" class="team-logo-large" alt="logo" />
+            <img id="team-detail-logo" class="team-logo" src="" alt="Logo">
             <div class="team-info">
               <h2 id="team-detail-name"></h2>
-              <p id="team-detail-country"></p>
+              <div id="team-detail-country"></div>
             </div>
           </div>
 
           <div class="team-stats">
-            <div class="stat-card">
-              <h3>Zawodnicy</h3>
-              <p id="team-detail-players-count">0</p>
+            <div class="stat">
+              <strong>Budżet:</strong>
+              <span class="stat-value" id="team-detail-budget"></span>
             </div>
-            <div class="stat-card">
-              <h3>Budżet</h3>
-              <p id="team-detail-budget">€0</p>
+            <div class="stat">
+              <strong>Zawodnicy:</strong>
+              <span class="stat-value" id="team-detail-players-count"></span>
             </div>
-            <div class="stat-card">
-              <h3>Wartość Drużyny</h3>
-              <p id="team-detail-value">€0</p>
+            <div class="stat">
+              <strong>Wartość Drużyny:</strong>
+              <span class="stat-value" id="team-detail-value"></span>
             </div>
           </div>
 
@@ -213,9 +185,10 @@
                 <span>Wiek: <strong id="pv-age"></strong></span>
                 <span>Pozycja: <strong id="pv-position"></strong></span>
                 <span>OVR: <strong id="pv-ovr"></strong></span>
-                <span>Wzrost: <strong id="pv-height"></strong></span>
                 <span>Potencjał: <strong id="pv-potential"></strong></span>
+                <span>Wzrost: <strong id="pv-height"></strong></span>
                 <span>Wartość: <strong id="pv-value"></strong></span>
+                <span>Przyrost: <strong id="pv-growth"></strong></span>
                 <span>Drużyna: <strong id="pv-team"></strong></span>
               </div>
             </div>
