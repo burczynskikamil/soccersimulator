@@ -229,6 +229,8 @@
   }
 
   function generateSkills(ovr, position) {
+    console.log(`[SKILL_GEN] Starting skill generation for ${position} (OVR: ${ovr})`);
+    
     const skills = {};
     const skillTiers = POSITION_SKILLS[position];
     
@@ -248,11 +250,11 @@
     const multiplier = position === 'GK' ? 3 : 11;
     const totalPoints = ovr * multiplier;
 
-    console.log(`\n=== GENERATING SKILLS FOR ${position} (OVR: ${ovr}) ===`);
-    console.log(`Total points to distribute: ${totalPoints}`);
-    console.log(`Expected breakdown:`);
+    console.log(`[SKILL_GEN] Total points to distribute: ${totalPoints}`);
+    console.log(`[SKILL_GEN] Expected breakdown:`);
     SKILL_PROBABILITIES[position].forEach(s => {
-      console.log(`  ${s.skill}: ${(s.prob * 100).toFixed(1)}% = ~${(totalPoints * s.prob).toFixed(1)} points`);
+      const expected = (totalPoints * s.prob).toFixed(1);
+      console.log(`[SKILL_GEN]   ${s.skill}: ${(s.prob * 100).toFixed(1)}% = ~${expected} points`);
     });
 
     // Distribute points one by one
@@ -266,9 +268,9 @@
       }
     }
 
-    console.log(`\nActual distribution:`);
+    console.log(`[SKILL_GEN] Actual distribution:`);
     SKILL_PROBABILITIES[position].forEach(s => {
-      console.log(`  ${s.skill}: ${skills[s.skill] || 0} points`);
+      console.log(`[SKILL_GEN]   ${s.skill}: ${skills[s.skill] || 0} points`);
     });
 
     return skills;
@@ -286,6 +288,8 @@
   }
 
   function generatePlayer(){
+    console.log('%c=== GENERATING NEW PLAYER ===', 'color: #00ff00; font-weight: bold;');
+    
     const age = 11;
     const country = sample(COUNTRIES);
     const position = sample(POSITIONS);
@@ -298,15 +302,20 @@
     const skills = generateSkills(ovr, position);
     const growth = generateGrowth(position);
 
-    return {
+    const player = {
       id, name, age, position, country: country.code, countryName: country.name,
       countryFlag: country.flag, countryColor: country.color,
       height, ovr, realPotential, hiddenPotentialMin: hidden.min, hiddenPotentialMax: hidden.max,
       growth, skills, created: Date.now()
     };
+    
+    console.log('%cPlayer created: ' + name, 'color: #00ff00; font-weight: bold;');
+    
+    return player;
   }
 
   async function generateAndSave(){
+    console.log('%c>>> GENERATE AND SAVE CLICKED <<<', 'color: #ff00ff; font-weight: bold; font-size: 14px;');
     const p = generatePlayer();
     players.push(p);
     await window.db.savePlayers(players);
