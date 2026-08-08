@@ -72,8 +72,6 @@
     document.getElementById('tab-dashboard').addEventListener('click', ()=>showTab('dashboard'));
     document.getElementById('tab-players').addEventListener('click', ()=>showTab('players'));
     document.getElementById('generate-player').addEventListener('click', generateAndSave);
-    document.getElementById('save-json').addEventListener('click', saveJSON);
-    document.getElementById('load-json').addEventListener('change', loadJSONFile);
     document.getElementById('back-to-list').addEventListener('click', ()=>{showTab('players')});
 
     document.querySelectorAll('#players-table thead th[data-sort]').forEach(th=>th.addEventListener('click', ()=>{sortBy(th.dataset.sort)}));
@@ -175,24 +173,24 @@
     list.forEach(p=>{
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><div class="player-row"><img class="avatar small" src="${avatarUrl(p)}" alt="avatar" style="border-radius:8px;width:40px;height:40px;object-fit:cover"/><div><div><a class="link" href="javascript:void(0)" onclick="window.showPlayerDetail('${p.id}')">${p.name}</a></div></div></div></td>
+        <td><div class="player-row"><img class="avatar small" src="${avatarUrl(p)}" alt="avatar" style="border-radius:8px;width:40px;height:40px;object-fit:cover"/><div><span class="link" onclick="window.showPlayerDetail('${p.id}')">${p.name}</span></div></div></td>
         <td>${p.age}</td>
         <td><img class="flag" src="${p.countryFlag}" alt="${p.countryName}"/> ${p.countryName}</td>
         <td>${p.ovr}</td>
-        <td>${displayHidden(p)}</td>
+        <td>${p.potential}</td>
         <td>${p.skills['Odbiór'] || '-'}</td>
         <td>${p.skills['Krycie'] || '-'}</td>
         <td>${p.skills['Podanie'] || '-'}</td>
         <td>${p.skills['Wizja'] || '-'}</td>
         <td>${p.skills['Szybkość'] || '-'}</td>
-        <td><button class="btn" data-id="${p.id}">Podgląd</button> <button class="btn" data-delete="${p.id}" style="background:#ff4d4f;color:white;border:0">Usuń</button></td>
+        <td>${p.skills['Drybling'] || '-'}</td>
+        <td>${p.skills['Strzały'] || '-'}</td>
+        <td>${p.skills['Główki'] || '-'}</td>
+        <td>${p.skills['Siła'] || '-'}</td>
+        <td>${p.skills['Przyspieszenie'] || '-'}</td>
+        <td>${p.skills['Kondycja'] || '-'}</td>
+        <td><button class="btn" onclick="window.deletePlayerConfirm('${p.id}', '${p.name.replace(/'/g, "\\'")}'" style="background:#ff4d4f;color:white;border:0">🗑️ Usuń</button></td>
       `;
-      tr.querySelector('button[data-id]')?.addEventListener('click',()=>{ showPlayer(p.id); });
-      tr.querySelector('button[data-delete]')?.addEventListener('click', async ()=>{ 
-        if(confirm('Usuń zawodnika '+p.name+'?')){ 
-          await deletePlayer(p.id);
-        } 
-      });
       $table.appendChild(tr);
     });
   }
@@ -202,7 +200,6 @@
     await window.db.savePlayers(players);
     dbStatus.textContent = '✅ Zawodnik usunięty';
     renderList(); 
-    showTab('players'); 
   }
 
   function displayHidden(p){ const h = computeHiddenRange(p.potential,p.age,p.ovr); return h.low+'–'+h.high; }
@@ -217,7 +214,6 @@
     el('pv-country').innerHTML = `<img class="flag" src="${p.countryFlag}"/> ${p.countryName}`;
     el('pv-avatar-img').src = avatarUrl(p);
     el('pv-ovr').textContent = p.ovr;
-    el('pv-hidden').textContent = displayHidden(p);
     const grid = el('pv-skills-grid'); 
     grid.innerHTML='';
     const offensive = ['Strzały','Drybling','Główki','Podanie','Wizja'];
@@ -255,42 +251,6 @@
     return 'color-bottom'; 
   }
 
-  async function saveJSON(){ 
-    const data = JSON.stringify(players, null, 2); 
-    const blob = new Blob([data],{type:'application/json'}); 
-    saveAs(blob, 'players.json'); 
-  }
-
-  async function loadJSONFile(e){ 
-    const f = e.target.files[0]; 
-    if(!f) return; 
-    const r = new FileReader(); 
-    r.onload = async ()=>{ 
-      try{ 
-        const imported = JSON.parse(r.result); 
-        if(Array.isArray(imported)){
-          players = imported.map(p=>{ 
-            if(!p.id) p.id = uid(); 
-            p.skills = p.skills || {}; 
-            Object.keys(p.skills).forEach(k=>{ 
-              p.skills[k] = Math.max(0, Math.min(99, Math.round(p.skills[k]||0))); 
-            }); 
-            return p;
-          });
-          await window.db.savePlayers(players);
-          dbStatus.textContent = '✅ Wczytano '+players.length+' zawodników';
-          renderList(); 
-          alert('Wczytano i podmieniono listę zawodników: '+players.length);
-        } else alert('Plik nie jest listą zawodników'); 
-      } catch(err){ 
-        console.error(err); 
-        alert('Błąd odczytu pliku'); 
-      } 
-    }; 
-    r.readAsText(f); 
-    e.target.value=''; 
-  }
-
   function sortBy(k){ 
     if(lastSort.k===k) lastSort.dir *= -1; 
     else { lastSort.k=k; lastSort.dir=1; } 
@@ -314,6 +274,11 @@
 
   // Expose functions globally for onclick handlers
   window.showPlayerDetail = showPlayer;
+  window.deletePlayerConfirm = (id, name) => {
+    if(confirm(`Usuń zawodnika ${name}?`)) {
+      deletePlayer(id);
+    }
+  };
 
   init();
 
