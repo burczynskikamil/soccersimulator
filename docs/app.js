@@ -1,4 +1,4 @@
-// app.js - updated: DiceBear avatars, flags via FlagsAPI, Supabase database integration
+// app.js - fixed: proper tab switching, skill generation, database loading
 (() => {
   const COUNTRIES = [
     {code:'PL',name:'Polska',flag:'https://flagsapi.com/PL/flat/64.png',color:'#ff4d4f'},
@@ -47,6 +47,7 @@
       
       // Load players from database
       players = await window.db.loadPlayers();
+      console.log('Loaded players:', players.length);
       
       // If no players, generate initial ones
       if(players.length === 0) {
@@ -83,9 +84,11 @@
 
   function showTab(name){ 
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); 
-    document.getElementById('tab-'+name).classList.add('active'); 
+    const tabEl = document.getElementById('tab-'+name);
+    if(tabEl) tabEl.classList.add('active'); 
     document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden')); 
-    document.getElementById(name).classList.remove('hidden'); 
+    const viewEl = document.getElementById(name);
+    if(viewEl) viewEl.classList.remove('hidden'); 
   }
 
   function uid(){ return 'p_' + Math.random().toString(36).slice(2,10); }
@@ -164,6 +167,7 @@
   }
 
   function renderList(){ 
+    if(!$table) return;
     $table.innerHTML=''; 
     const countryFilter = filterCountry.value; 
     const q = searchInput.value.trim().toLowerCase(); 
@@ -189,7 +193,7 @@
         <td>${p.skills['Siła'] || '-'}</td>
         <td>${p.skills['Przyspieszenie'] || '-'}</td>
         <td>${p.skills['Kondycja'] || '-'}</td>
-        <td><button class="btn" onclick="window.deletePlayerConfirm('${p.id}', '${p.name.replace(/'/g, "\\'")}'" style="background:#ff4d4f;color:white;border:0">🗑️ Usuń</button></td>
+        <td><button class="btn" onclick="window.deletePlayerConfirm('${p.id}', '${p.name.replace(/'/g, "\\'")}')" style="background:#ff4d4f;color:white;border:0">🗑️ Usuń</button></td>
       `;
       $table.appendChild(tr);
     });
@@ -206,15 +210,23 @@
 
   function showPlayer(id){ 
     const p = players.find(x=>x.id===id); 
-    if(!p) return; 
+    if(!p) {
+      console.error('Player not found:', id);
+      return;
+    }
+    console.log('Showing player:', p);
     showTab('player-view'); 
     el('pv-name').textContent = p.name; 
     el('pv-age').textContent = p.age; 
     el('pv-potential').textContent = p.potential;
-    el('pv-country').innerHTML = `<img class="flag" src="${p.countryFlag}"/> ${p.countryName}`;
+    el('pv-country').innerHTML = `<img class="flag" src="${p.countryFlag}" alt="${p.countryName}"/> ${p.countryName}`;
     el('pv-avatar-img').src = avatarUrl(p);
     el('pv-ovr').textContent = p.ovr;
     const grid = el('pv-skills-grid'); 
+    if(!grid) {
+      console.error('Skills grid not found');
+      return;
+    }
     grid.innerHTML='';
     const offensive = ['Strzały','Drybling','Główki','Podanie','Wizja'];
     const defensive = ['Odbiór','Krycie'];
