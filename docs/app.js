@@ -287,6 +287,11 @@
       // Add 1 point to skill
       if (skill in skills) {
         skills[skill]++;
+        if (i < 20) {
+          console.log(`[POINT_${i}] Adding to "${skill}", now: ${skills[skill]}`);
+        }
+      } else {
+        console.log(`[ERROR_${i}] Skill "${skill}" NOT in skills object! Available: ${Object.keys(skills).join(', ')}`);
       }
     }
 
