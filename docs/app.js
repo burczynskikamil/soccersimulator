@@ -214,6 +214,8 @@
     return { min: minHidden, max: maxHidden };
   }
 
+  let debugLogCount = 0;
+
   function getSkillByProbability(position) {
     const probs = SKILL_PROBABILITIES[position];
     const rand = Math.random();
@@ -221,7 +223,17 @@
 
     for (let skillObj of probs) {
       cumulative += skillObj.prob;
+      
+      // Log first 10 selections for debugging
+      if (debugLogCount < 10) {
+        console.log(`[PROB_DEBUG] Rand: ${rand.toFixed(4)}, Cumulative: ${cumulative.toFixed(4)}, ${skillObj.skill}, Match: ${rand <= cumulative}`);
+      }
+      
       if (rand <= cumulative) {
+        if (debugLogCount < 10) {
+          console.log(`[PROB_DEBUG] ✓ SELECTED: ${skillObj.skill}`);
+          debugLogCount++;
+        }
         return skillObj.skill;
       }
     }
@@ -230,6 +242,7 @@
 
   function generateSkills(ovr, position) {
     console.log(`[SKILL_GEN] Starting skill generation for ${position} (OVR: ${ovr})`);
+    debugLogCount = 0;
     
     const skills = {};
     const skillTiers = POSITION_SKILLS[position];
