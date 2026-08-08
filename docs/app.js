@@ -1,4 +1,4 @@
-// app.js - complete player generation system with position-based skills
+// app.js - complete player and team management system
 (() => {
   const COUNTRIES = [
     {code:'PL',name:'Polska',flag:'https://flagsapi.com/PL/flat/64.png',color:'#ff4d4f'},
@@ -21,81 +21,84 @@
     'GK': 'Bramkarz'
   };
 
-  // Position-based skill weights - what each position emphasizes
+  const POSITION_COLORS = {
+    'ST': { bg: '#ff4d4f', text: '#fff' },
+    'CM': { bg: '#2db34a', text: '#fff' },
+    'CB': { bg: '#ffb300', text: '#000' },
+    'GK': { bg: '#3f7fff', text: '#fff' }
+  };
+
+  // Skill categories for all positions
+  const SKILL_CATEGORIES = {
+    'ST': {
+      'Ofensywne': ['Strzały', 'Główki', 'Drybling'],
+      'Fizyczne': ['Siła', 'Szybkość', 'Kondycja', 'Przyspieszenie'],
+      'Techniczne': ['Podanie', 'Wizja'],
+      'Defensywne': ['Odbiór', 'Krycie']
+    },
+    'CM': {
+      'Techniczne': ['Podanie', 'Wizja'],
+      'Fizyczne': ['Szybkość', 'Kondycja', 'Przyspieszenie'],
+      'Ofensywne': ['Drybling', 'Strzały', 'Główki'],
+      'Defensywne': ['Odbiór', 'Krycie']
+    },
+    'CB': {
+      'Defensywne': ['Odbiór', 'Krycie'],
+      'Fizyczne': ['Siła', 'Szybkość', 'Główki', 'Przyspieszenie'],
+      'Techniczne': ['Podanie', 'Wizja'],
+      'Ofensywne': ['Strzały', 'Drybling', 'Kondycja']
+    },
+    'GK': {
+      'Bramkarskie': ['Sam na sam', 'Obrona strzałów', 'Łapanie']
+    }
+  };
+
+  const CATEGORY_IMPORTANCE = {
+    'ST': {
+      'Ofensywne': 'primary',
+      'Fizyczne': 'secondary',
+      'Techniczne': 'secondary',
+      'Defensywne': 'tertiary'
+    },
+    'CM': {
+      'Techniczne': 'primary',
+      'Fizyczne': 'secondary',
+      'Ofensywne': 'secondary',
+      'Defensywne': 'tertiary'
+    },
+    'CB': {
+      'Defensywne': 'primary',
+      'Fizyczne': 'secondary',
+      'Techniczne': 'secondary',
+      'Ofensywne': 'tertiary'
+    },
+    'GK': {
+      'Bramkarskie': 'primary'
+    }
+  };
+
+  // Position-based skill weights
   const SKILL_WEIGHTS = {
     'ST': {
-      'Strzały': 10,
-      'Główki': 10,
-      'Siła': 9,
-      'Szybkość': 9,
-      'Kondycja': 9,
-      'Drybling': 8,
-      'Przyspieszenie': 8,
-      'Podanie': 7,
-      'Wizja': 7,
-      'Odbiór': 3,
-      'Krycie': 3
+      'Strzały': 10, 'Główki': 10, 'Siła': 9, 'Szybkość': 9,
+      'Kondycja': 9, 'Drybling': 8, 'Przyspieszenie': 8, 'Podanie': 7,
+      'Wizja': 7, 'Odbiór': 3, 'Krycie': 3
     },
     'CM': {
-      'Podanie': 10,
-      'Wizja': 10,
-      'Kondycja': 9,
-      'Szybkość': 9,
-      'Drybling': 9,
-      'Odbiór': 8,
-      'Przyspieszenie': 8,
-      'Strzały': 8,
-      'Krycie': 6,
-      'Główki': 6,
-      'Siła': 6
+      'Podanie': 10, 'Wizja': 10, 'Kondycja': 9, 'Szybkość': 9,
+      'Drybling': 9, 'Odbiór': 8, 'Przyspieszenie': 8, 'Strzały': 8,
+      'Krycie': 6, 'Główki': 6, 'Siła': 6
     },
     'CB': {
-      'Odbiór': 10,
-      'Krycie': 10,
-      'Siła': 9,
-      'Szybkość': 9,
-      'Główki': 9,
-      'Podanie': 8,
-      'Przyspieszenie': 8,
-      'Wizja': 8,
-      'Strzały': 5,
-      'Drybling': 5,
-      'Kondycja': 5
+      'Odbiór': 10, 'Krycie': 10, 'Siła': 9, 'Szybkość': 9,
+      'Główki': 9, 'Podanie': 8, 'Przyspieszenie': 8, 'Wizja': 8,
+      'Strzały': 5, 'Drybling': 5, 'Kondycja': 5
     },
     'GK': {
-      'Sam na sam': 100,
-      'Obrona strzałów': 100,
-      'Łapanie': 100
+      'Sam na sam': 100, 'Obrona strzałów': 100, 'Łapanie': 100
     }
   };
 
-  // Position-based skill tiers (for display purposes)
-  const POSITION_SKILLS = {
-    'ST': {
-      tier1: ['Strzały', 'Główki'],
-      tier2: ['Siła', 'Szybkość', 'Kondycja'],
-      tier3: ['Drybling', 'Przyspieszenie'],
-      tier4: ['Podanie', 'Wizja'],
-      tier5: ['Odbiór', 'Krycie']
-    },
-    'CM': {
-      tier1: ['Podanie', 'Wizja'],
-      tier2: ['Kondycja', 'Szybkość', 'Drybling'],
-      tier3: ['Odbiór', 'Przyspieszenie', 'Strzały'],
-      tier4: ['Krycie', 'Główki', 'Siła']
-    },
-    'CB': {
-      tier1: ['Odbiór', 'Krycie'],
-      tier2: ['Siła', 'Szybkość', 'Główki'],
-      tier3: ['Podanie', 'Przyspieszenie', 'Wizja'],
-      tier4: ['Strzały', 'Drybling', 'Kondycja']
-    },
-    'GK': {
-      tier1: ['Sam na sam', 'Obrona strzałów', 'Łapanie']
-    }
-  };
-
-  // Height generation weights by position (cm ranges)
   const HEIGHT_RANGES = {
     'GK': { min: 185, max: 195, avg: 190 },
     'CB': { min: 182, max: 193, avg: 188 },
@@ -117,13 +120,16 @@
   };
 
   const el = id => document.getElementById(id);
-  const $table = document.querySelector('#players-table tbody');
+  const $playersTable = document.querySelector('#players-table tbody');
+  const $teamsTable = document.querySelector('#teams-table tbody');
   const filterCountry = el('filter-country');
   const searchInput = el('search');
   const dbStatus = el('db-status');
 
   let players = [];
+  let teams = [];
   let lastSort = { k: 'name', dir: 1 };
+  let currentTeamId = null;
 
   async function init(){
     try {
@@ -132,7 +138,8 @@
       dbStatus.textContent = '✅ Baza danych połączona';
       
       players = await window.db.loadPlayers();
-      console.log('Loaded players:', players.length);
+      teams = await window.db.loadTeams() || [];
+      console.log('Loaded players:', players.length, 'teams:', teams.length);
       
     } catch (err) {
       console.error('Init error:', err);
@@ -148,8 +155,12 @@
 
     document.getElementById('tab-dashboard').addEventListener('click', ()=>showTab('dashboard'));
     document.getElementById('tab-players').addEventListener('click', ()=>showTab('players'));
+    document.getElementById('tab-teams').addEventListener('click', ()=>{showTab('teams'); renderTeamsList();});
     document.getElementById('generate-player').addEventListener('click', generateAndSave);
-    document.getElementById('back-to-list').addEventListener('click', ()=>{showTab('players')});
+    document.getElementById('create-team-btn').addEventListener('click', ()=>showTab('team-create'));
+    document.getElementById('back-to-list').addEventListener('click', ()=>showTab('players'));
+    document.getElementById('back-to-teams').addEventListener('click', ()=>showTab('teams'));
+    document.getElementById('team-form-submit').addEventListener('click', saveTeam);
 
     document.querySelectorAll('#players-table thead th[data-sort]').forEach(th=>th.addEventListener('click', ()=>{sortBy(th.dataset.sort)}));
     filterCountry.addEventListener('change', renderList);
@@ -208,16 +219,13 @@
     const skills = {};
     const weights = SKILL_WEIGHTS[position];
     
-    // Initialize all skills to 0
     for (let skill in weights) {
       skills[skill] = 0;
     }
 
-    // Calculate total points to distribute
     const multiplier = position === 'GK' ? 3 : 11;
     const totalPoints = ovr * multiplier;
 
-    // Build a weighted array: if skill has weight 10, add it 10 times
     const weightedSkills = [];
     for (let skill in weights) {
       const weight = weights[skill];
@@ -226,7 +234,6 @@
       }
     }
 
-    // Distribute points: randomly pick from weighted array
     for (let i = 0; i < totalPoints; i++) {
       const randomIndex = Math.floor(Math.random() * weightedSkills.length);
       const selectedSkill = weightedSkills[randomIndex];
@@ -234,6 +241,11 @@
     }
 
     return skills;
+  }
+
+  function calculatePlayerValue(hiddenPot, skills) {
+    const sumSkills = Object.values(skills).reduce((a, b) => a + b, 0);
+    return Math.round((hiddenPot * 50000) + (sumSkills * 1000));
   }
 
   function generateGrowth(position) {
@@ -259,15 +271,14 @@
     const name = generateUniqueName(country.code, players);
     const skills = generateSkills(ovr, position);
     const growth = generateGrowth(position);
+    const value = calculatePlayerValue(hidden.max, skills);
 
-    const player = {
+    return {
       id, name, age, position, country: country.code, countryName: country.name,
       countryFlag: country.flag, countryColor: country.color,
       height, ovr, realPotential, hiddenPotentialMin: hidden.min, hiddenPotentialMax: hidden.max,
-      growth, skills, created: Date.now()
+      growth, skills, value, created: Date.now(), teamId: null
     };
-    
-    return player;
   }
 
   async function generateAndSave(){
@@ -278,8 +289,159 @@
     renderList();
   }
 
-  function sample(x){ return x[Math.floor(Math.random()*x.length)]; }
+  async function saveTeam(){
+    const name = el('team-name').value.trim();
+    const country = el('team-country').value;
+    const logoInput = el('team-logo');
+    
+    if (!name || !country) {
+      alert('Wypełnij wszystkie pola!');
+      return;
+    }
 
+    let logoDataUrl = '';
+    if (logoInput.files.length > 0) {
+      logoDataUrl = await fileToBase64(logoInput.files[0]);
+    }
+
+    const team = {
+      id: uid(),
+      name,
+      country,
+      countryName: COUNTRIES.find(c => c.code === country)?.name || country,
+      countryFlag: COUNTRIES.find(c => c.code === country)?.flag || '',
+      logo: logoDataUrl,
+      budget: 1000000,
+      created: Date.now()
+    };
+
+    teams.push(team);
+    await window.db.saveTeams(teams);
+    dbStatus.textContent = '✅ Drużyna utworzona';
+    
+    el('team-name').value = '';
+    el('team-country').value = '';
+    logoInput.value = '';
+    
+    showTab('teams');
+    renderTeamsList();
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderTeamsList(){
+    if(!$teamsTable) return;
+    $teamsTable.innerHTML='';
+    
+    teams.forEach(t=>{
+      const playersInTeam = players.filter(p => p.teamId === t.id);
+      const teamValue = playersInTeam.reduce((sum, p) => sum + (p.value || 0), 0);
+      
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><img src="${t.logo || 'data:image/svg+xml,<svg></svg>'}" style="width:40px;height:40px;object-fit:cover;border-radius:4px"/></td>
+        <td><span class="link" onclick="window.showTeamDetail('${t.id}')">${t.name}</span></td>
+        <td><img class="flag" src="${t.countryFlag}" alt="${t.countryName}"/> ${t.countryName}</td>
+        <td>${playersInTeam.length}</td>
+        <td>€${(t.budget || 0).toLocaleString('pl-PL')}</td>
+        <td>€${teamValue.toLocaleString('pl-PL')}</td>
+        <td><button class="btn" onclick="window.deleteTeamConfirm('${t.id}', '${t.name.replace(/'/g, "\\'")}')" style="background:#ff4d4f;color:white;border:0">✕</button></td>
+      `;
+      $teamsTable.appendChild(tr);
+    });
+  }
+
+  function showTeamDetail(teamId){
+    const team = teams.find(t => t.id === teamId);
+    if (!team) return;
+    
+    currentTeamId = teamId;
+    showTab('team-detail');
+    
+    el('team-detail-name').textContent = team.name;
+    el('team-detail-country').innerHTML = `<img class="flag" src="${team.countryFlag}"/> ${team.countryName}`;
+    el('team-detail-logo').src = team.logo || 'data:image/svg+xml,<svg></svg>';
+    el('team-detail-budget').textContent = `€${(team.budget || 0).toLocaleString('pl-PL')}`;
+    el('team-edit-budget').value = team.budget || 1000000;
+    el('team-edit-logo-input').value = '';
+    
+    const playersInTeam = players.filter(p => p.teamId === teamId);
+    const teamValue = playersInTeam.reduce((sum, p) => sum + (p.value || 0), 0);
+    el('team-detail-value').textContent = `€${teamValue.toLocaleString('pl-PL')}`;
+    el('team-detail-players-count').textContent = playersInTeam.length;
+    
+    renderTeamPlayersTable(teamId);
+  }
+
+  function renderTeamPlayersTable(teamId){
+    const $table = document.querySelector('#team-players-table tbody');
+    if (!$table) return;
+    
+    $table.innerHTML = '';
+    const teamPlayers = players.filter(p => p.teamId === teamId);
+    
+    teamPlayers.forEach(p => {
+      const colors = POSITION_COLORS[p.position];
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span style="background:${colors.bg};color:${colors.text};padding:4px 8px;border-radius:4px;font-weight:bold">${p.position}</span></td>
+        <td><span class="link" onclick="window.showPlayerDetail('${p.id}')">${p.name}</span></td>
+        <td>${p.age}</td>
+        <td>${p.ovr}</td>
+        <td>${p.hiddenPotentialMin}–${p.hiddenPotentialMax}</td>
+        <td>€${(p.value || 0).toLocaleString('pl-PL')}</td>
+        <td><button class="btn" onclick="window.removePlayerFromTeam('${p.id}')" style="background:#ff7a18;color:white;border:0">Usuń</button></td>
+      `;
+      $table.appendChild(tr);
+    });
+  }
+
+  async function updateTeamBudget(){
+    if (!currentTeamId) return;
+    
+    const team = teams.find(t => t.id === currentTeamId);
+    if (!team) return;
+    
+    const newBudget = parseInt(el('team-edit-budget').value) || team.budget;
+    team.budget = newBudget;
+    
+    const logoInput = el('team-edit-logo-input');
+    if (logoInput.files.length > 0) {
+      team.logo = await fileToBase64(logoInput.files[0]);
+    }
+    
+    await window.db.saveTeams(teams);
+    dbStatus.textContent = '✅ Drużyna zaktualizowana';
+    showTeamDetail(currentTeamId);
+  }
+
+  async function deleteTeam(teamId){
+    teams = teams.filter(t => t.id !== teamId);
+    players = players.map(p => p.teamId === teamId ? {...p, teamId: null} : p);
+    await window.db.saveTeams(teams);
+    await window.db.savePlayers(players);
+    dbStatus.textContent = '✅ Drużyna usunięta';
+    showTab('teams');
+    renderTeamsList();
+  }
+
+  async function removePlayerFromTeam(playerId){
+    const player = players.find(p => p.id === playerId);
+    if (player) {
+      player.teamId = null;
+      await window.db.savePlayers(players);
+      renderTeamPlayersTable(currentTeamId);
+    }
+  }
+
+  function sample(x){ return x[Math.floor(Math.random()*x.length)]; }
   function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
 
   function generateUniqueName(countryCode, existing){
@@ -294,42 +456,31 @@
     return 'Player '+uid();
   }
 
-  function avatarUrl(p){
-    const seed = encodeURIComponent((p.name || p.id));
-    return `https://avatars.dicebear.com/api/avataaars/${seed}.svg?eyes=${p.ovr>60? 'happy':'default'}&mouth=${p.ovr>50? 'smile':'serious'}&top[]=shortWaved&accessories[]=none&background=%23ffffff00`;
-  }
-
   function renderList(){
-    if(!$table) return;
-    $table.innerHTML='';
+    if(!$playersTable) return;
+    $playersTable.innerHTML='';
     const countryFilter = filterCountry.value;
     const q = searchInput.value.trim().toLowerCase();
     let list = players.slice();
     if(countryFilter) list = list.filter(p=>p.country===countryFilter);
     if(q) list = list.filter(p=>p.name.toLowerCase().includes(q));
+    
     list.forEach(p=>{
+      const colors = POSITION_COLORS[p.position];
+      const teamName = p.teamId ? teams.find(t => t.id === p.teamId)?.name : '-';
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><div class="player-row"><img class="avatar small" src="${avatarUrl(p)}" alt="avatar" style="border-radius:8px;width:40px;height:40px;object-fit:cover"/><div><span class="link" onclick="window.showPlayerDetail('${p.id}')">${p.name}</span></div></div></td>
+        <td><span style="background:${colors.bg};color:${colors.text};padding:4px 8px;border-radius:4px;font-weight:bold">${p.position}</span></td>
+        <td><span class="link" onclick="window.showPlayerDetail('${p.id}')">${p.name}</span></td>
         <td>${p.age}</td>
         <td><img class="flag" src="${p.countryFlag}" alt="${p.countryName}"/> ${p.countryName}</td>
-        <td><strong>${p.position}</strong></td>
         <td>${p.ovr}</td>
         <td>${p.hiddenPotentialMin}–${p.hiddenPotentialMax}</td>
-        <td>${p.skills['Odbiór'] || '-'}</td>
-        <td>${p.skills['Krycie'] || '-'}</td>
-        <td>${p.skills['Podanie'] || '-'}</td>
-        <td>${p.skills['Wizja'] || '-'}</td>
-        <td>${p.skills['Szybkość'] || '-'}</td>
-        <td>${p.skills['Drybling'] || '-'}</td>
-        <td>${p.skills['Strzały'] || '-'}</td>
-        <td>${p.skills['Główki'] || '-'}</td>
-        <td>${p.skills['Siła'] || '-'}</td>
-        <td>${p.skills['Przyspieszenie'] || '-'}</td>
-        <td>${p.skills['Kondycja'] || '-'}</td>
+        <td>€${(p.value || 0).toLocaleString('pl-PL')}</td>
+        <td>${teamName}</td>
         <td><button class="btn" onclick="window.deletePlayerConfirm('${p.id}', '${p.name.replace(/'/g, "\\'")}')" style="background:#ff4d4f;color:white;border:0">✕</button></td>
       `;
-      $table.appendChild(tr);
+      $playersTable.appendChild(tr);
     });
   }
 
@@ -342,74 +493,75 @@
 
   function showPlayer(id){
     const p = players.find(x=>x.id===id);
-    if(!p) {
-      console.error('Player not found:', id);
-      return;
-    }
+    if(!p) return;
+    
     showTab('player-view');
     el('pv-name').textContent = p.name;
     el('pv-age').textContent = p.age;
-    el('pv-position').textContent = POSITION_NAMES[p.position] + ' (' + p.position + ')';
-    el('pv-potential').textContent = p.hiddenPotentialMin + '–' + p.hiddenPotentialMax + ' (ukryty potencjał)';
-    el('pv-country').innerHTML = `<img class="flag" src="${p.countryFlag}" alt="${p.countryName}"/> ${p.countryName}`;
-    el('pv-avatar-img').src = avatarUrl(p);
+    const colors = POSITION_COLORS[p.position];
+    el('pv-position').innerHTML = `<span style="background:${colors.bg};color:${colors.text};padding:4px 8px;border-radius:4px;font-weight:bold">${POSITION_NAMES[p.position]} (${p.position})</span>`;
+    el('pv-potential').textContent = p.hiddenPotentialMin + '–' + p.hiddenPotentialMax;
+    el('pv-country').innerHTML = `<img class="flag" src="${p.countryFlag}"/> ${p.countryName}`;
     el('pv-ovr').textContent = p.ovr;
+    el('pv-value').textContent = `€${(p.value || 0).toLocaleString('pl-PL')}`;
     el('pv-growth').textContent = p.growth.toFixed(2) + '/1.0';
-    const grid = el('pv-skills-grid');
-    if(!grid) return;
-    grid.innerHTML='';
-
-    const skillTiers = POSITION_SKILLS[p.position];
     
-    if (p.position === 'GK') {
-      const tierSkills = skillTiers.tier1 || [];
-      if (tierSkills.length > 0) {
-        grid.appendChild(renderSkillsColumn('Umiejętności bramkarza', tierSkills, p));
-      }
-      return;
+    const teamName = p.teamId ? teams.find(t => t.id === p.teamId)?.name : 'Brak';
+    el('pv-team').textContent = teamName;
+    
+    // Team assignment
+    const teamSelect = el('pv-team-select');
+    teamSelect.innerHTML = '<option value="">Brak drużyny</option>';
+    teams.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.name;
+      if (p.teamId === t.id) opt.selected = true;
+      teamSelect.appendChild(opt);
+    });
+    
+    el('pv-assign-team').onclick = async () => {
+      p.teamId = teamSelect.value || null;
+      await window.db.savePlayers(players);
+      dbStatus.textContent = '✅ Zawodnik przypisany';
+      showPlayer(id);
+    };
+    
+    // Skills by category
+    const grid = el('pv-skills-grid');
+    grid.innerHTML='';
+    
+    const categories = SKILL_CATEGORIES[p.position];
+    const importance = CATEGORY_IMPORTANCE[p.position];
+    
+    for (let category in categories) {
+      const skills = categories[category];
+      const imp = importance[category];
+      let bgColor = '#e8e8e8';
+      if (imp === 'primary') bgColor = '#b19cd9';
+      else if (imp === 'secondary') bgColor = '#90EE90';
+      
+      const col = document.createElement('div');
+      col.className='skills-column';
+      col.style.backgroundColor = bgColor;
+      col.style.borderRadius = '8px';
+      col.style.padding = '12px';
+      
+      const h = document.createElement('h4');
+      h.textContent = category;
+      col.appendChild(h);
+      
+      skills.forEach(k=>{
+        if(p.skills[k]!==undefined){
+          const row = document.createElement('div');
+          row.className='skill-row';
+          const pct = (p.skills[k]/99)*100;
+          row.innerHTML = `<div class="skill-name">${k}</div><div class="skill-bar"><div class="skill-fill" style="width:${pct}%;background:#333"></div></div><div class="skill-val">${p.skills[k]}</div>`;
+          col.appendChild(row);
+        }
+      });
+      grid.appendChild(col);
     }
-
-    const tierOrder = [
-      { name: 'tier1', label: '★★★ Top Tier' },
-      { name: 'tier2', label: '★★ Ważne' },
-      { name: 'tier3', label: '★ Przydatne' },
-      { name: 'tier4', label: 'Niche' },
-      { name: 'tier5', label: 'Pozostałe' }
-    ];
-
-    tierOrder.forEach(tier => {
-      const tierSkills = skillTiers[tier.name] || [];
-      if (tierSkills.length > 0) {
-        grid.appendChild(renderSkillsColumn(tier.label, tierSkills, p));
-      }
-    });
-  }
-
-  function renderSkillsColumn(title, keys, p){
-    const col = document.createElement('div');
-    col.className='skills-column';
-    const h = document.createElement('h4');
-    h.textContent = title;
-    col.appendChild(h);
-    keys.forEach(k=>{
-      if(p.skills[k]!==undefined){
-        const row = document.createElement('div');
-        row.className='skill-row';
-        row.innerHTML = `<div class="skill-name">${k}</div><div class="skill-bar"><div class="skill-fill ${colorClassFor(p.skills[k]||0)}" style="width:${(p.skills[k]/99)*100}%"></div></div><div class="skill-val">${p.skills[k]}</div>`;
-        col.appendChild(row);
-      }
-    });
-    return col;
-  }
-
-  function colorClassFor(val){
-    if(val>=91) return 'color-veryhigh';
-    if(val>=76) return 'color-high-dark';
-    if(val>=61) return 'color-high';
-    if(val>=46) return 'color-mid';
-    if(val>=31) return 'color-low';
-    if(val>=16) return 'color-lower';
-    return 'color-bottom';
   }
 
   function sortBy(k){
@@ -431,15 +583,20 @@
     if(k==='position') return p.position;
     if(k==='ovr') return p.ovr;
     if(k==='potential') return p.realPotential;
+    if(k==='value') return p.value || 0;
     return p.skills[k] || 0;
   }
 
   window.showPlayerDetail = showPlayer;
+  window.showTeamDetail = showTeamDetail;
   window.deletePlayerConfirm = (id, name) => {
-    if(confirm(`Usuń zawodnika ${name}?`)) {
-      deletePlayer(id);
-    }
+    if(confirm(`Usuń zawodnika ${name}?`)) deletePlayer(id);
   };
+  window.deleteTeamConfirm = (id, name) => {
+    if(confirm(`Usuń drużynę ${name}?`)) deleteTeam(id);
+  };
+  window.removePlayerFromTeam = removePlayerFromTeam;
+  window.updateTeamBudget = updateTeamBudget;
 
   init();
 
