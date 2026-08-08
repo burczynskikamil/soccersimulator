@@ -543,12 +543,12 @@
     showTab('player-view');
     el('pv-name').textContent = p.name;
     el('pv-age').textContent = p.age;
-    const colors = POSITION_COLORS[p.position];
-    el('pv-position').innerHTML = `<span style="background:${colors.bg};color:${colors.text};padding:4px 8px;border-radius:4px;font-weight:bold">${POSITION_NAMES[p.position]} (${p.position})</span>`;
+    el('pv-position').textContent = POSITION_NAMES[p.position] + ' (' + p.position + ')';
     el('pv-potential').textContent = p.hiddenPotentialMin + '–' + p.hiddenPotentialMax;
     el('pv-country').innerHTML = `<img class="flag" src="${p.countryFlag}"/> ${p.countryName}`;
     el('pv-ovr').textContent = p.ovr;
     el('pv-value').textContent = `€${(p.value || 0).toLocaleString('pl-PL')}`;
+    el('pv-height').textContent = p.height + ' cm';
     el('pv-growth').textContent = p.growth.toFixed(2) + '/1.0';
     
     const teamName = p.teamId ? teams.find(t => t.id === p.teamId)?.name : 'Brak';
@@ -586,14 +586,16 @@
       
       const col = document.createElement('div');
       col.className='skills-column';
-      col.style.backgroundColor = categoryColors.bg;
-      col.style.color = categoryColors.text;
+      col.style.color = '#e6eef8';
       col.style.borderRadius = '8px';
       col.style.padding = '12px';
+      col.style.border = '1px solid rgba(255,255,255,0.05)';
+      col.style.background = 'rgba(255,255,255,0.02)';
       
       const h = document.createElement('h4');
       h.textContent = category;
-      h.style.color = categoryColors.text;
+      h.style.color = categoryColors.bg;
+      h.style.margin = '0 0 12px 0';
       col.appendChild(h);
       
       skills.forEach(k=>{
@@ -601,8 +603,8 @@
           const row = document.createElement('div');
           row.className='skill-row';
           const pct = (p.skills[k]/99)*100;
-          row.innerHTML = `<div class="skill-name">${k}</div><div class="skill-bar"><div class="skill-fill" style="width:${pct}%;background:${categoryColors.text};opacity:0.8"></div></div><div class="skill-val">${p.skills[k]}</div>`;
-          row.style.color = categoryColors.text;
+          row.innerHTML = `<div class="skill-name">${k}</div><div class="skill-bar"><div class="skill-fill" style="width:${pct}%;background:${categoryColors.bg};opacity:0.8"></div></div><div class="skill-val">${p.skills[k]}</div>`;
+          row.style.color = '#e6eef8';
           col.appendChild(row);
         }
       });
