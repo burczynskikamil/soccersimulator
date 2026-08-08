@@ -47,7 +47,7 @@
     }
   };
 
-  // Tier probabilities
+  // Tier probabilities for field players
   const TIER_PROBABILITIES = {
     'ST': [
       { tier: 'tier1', prob: 0.40 },
@@ -169,14 +169,21 @@
     return Math.max(30, Math.min(99, potential));
   }
 
-  function generateOVR(potential, position) {
-    // Max OVR is min(60, potential)
-    const maxOvr = Math.min(60, potential);
-    // Higher potential = higher chance for higher OVR
-    const expectedOvr = Math.round((potential / 99) * maxOvr);
-    // Add some variance
-    const variance = randInt(-5, 5);
-    return Math.max(1, Math.min(maxOvr, expectedOvr + variance));
+  function generateOVR(potential) {
+    // OVR is random between 20-60
+    // Higher potential gives better chance at higher OVR
+    const minOVR = 20;
+    const maxOVR = 60;
+    
+    // Calculate probability curve - higher potential = more likely to get higher OVR
+    const potentialRatio = (potential - 30) / (99 - 30); // 0 to 1
+    const expectedOVR = minOVR + (maxOVR - minOVR) * potentialRatio;
+    
+    // Add variance around expected OVR
+    const variance = randInt(-8, 8);
+    const ovr = expectedOVR + variance;
+    
+    return Math.max(minOVR, Math.min(maxOVR, Math.round(ovr)));
   }
 
   function generateHiddenPotentialRange(realPotential) {
@@ -205,11 +212,7 @@
     const skills = {};
     const skillTiers = POSITION_SKILLS[position];
     
-    // Calculate points pool
-    const multiplier = position === 'GK' ? 3 : 11;
-    const totalPoints = ovr * multiplier;
-
-    // Get all available skills for this position
+    // Initialize all skills to 0
     let allSkills = [];
     const tierOrder = ['tier1', 'tier2', 'tier3', 'tier4', 'tier5'];
     for (const tierName of tierOrder) {
@@ -217,12 +220,15 @@
       allSkills = allSkills.concat(tierSkills);
     }
 
-    // Initialize all skills to 0
     allSkills.forEach(skill => {
       skills[skill] = 0;
     });
 
-    // Distribute points
+    // Calculate total points to distribute
+    const multiplier = position === 'GK' ? 3 : 11;
+    const totalPoints = ovr * multiplier;
+
+    // Distribute points one by one
     for (let i = 0; i < totalPoints; i++) {
       // Select tier by probability
       const tier = getTierByProbability(position);
@@ -259,18 +265,18 @@
     const position = sample(POSITIONS);
     const height = generateHeight(position);
     const realPotential = generatePotential();
-    const potential = generateOVR(realPotential, position);
+    const ovr = generateOVR(realPotential);
     const hidden = generateHiddenPotentialRange(realPotential);
     const id = uid();
     const name = generateUniqueName(country.code, players);
-    const skills = generateSkills(potential, position);
+    const skills = generateSkills(ovr, position);
     const growth = generateGrowth(position);
 
     return {
       id, name, age, position, country: country.code, countryName: country.name,
       countryFlag: country.flag, countryColor: country.color,
-      height, potential, realPotential, hiddenPotentialMin: hidden.min, hiddenPotentialMax: hidden.max,
-      ovr: potential, growth, skills, created: Date.now()
+      height, ovr, realPotential, hiddenPotentialMin: hidden.min, hiddenPotentialMax: hidden.max,
+      growth, skills, created: Date.now()
     };
   }
 
