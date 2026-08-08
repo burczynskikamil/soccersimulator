@@ -43,11 +43,7 @@
       tier4: ['Strzały', 'Drybling', 'Kondycja']
     },
     'GK': {
-      tier1: ['Sam na sam', 'Obrona strzałów', 'Łapanie'],
-      tier2: ['Stałe fragmenty gry'],
-      tier3: ['Podanie', 'Wizja'],
-      tier4: ['Szybkość', 'Siła', 'Przyspieszenie'],
-      tier5: ['Kondycja']
+      tier1: ['Sam na sam', 'Obrona strzałów', 'Łapanie']
     }
   };
 
@@ -90,14 +86,6 @@
       players = await window.db.loadPlayers();
       console.log('Loaded players:', players.length);
       
-      if(players.length === 0) {
-        dbStatus.textContent = '📝 Generowanie zawodników...';
-        for(let i=0; i<8; i++) {
-          players.push(generatePlayer());
-        }
-        await window.db.savePlayers(players);
-        dbStatus.textContent = '✅ Zawodnicy zapisani';
-      }
     } catch (err) {
       console.error('Init error:', err);
       dbStatus.textContent = '⚠️ Błąd bazy danych';
@@ -174,13 +162,26 @@
   function generateSkills(ovr, position) {
     const skills = {};
     const skillTiers = POSITION_SKILLS[position];
-    const multiplier = position === 'GK' ? 3 : 11;
+    
+    // For GK, only generate the 3 tier1 skills
+    if (position === 'GK') {
+      const gkSkills = skillTiers.tier1 || [];
+      gkSkills.forEach(skill => {
+        const baseSkill = Math.round((ovr / 60) * 99);
+        const variance = randInt(-8, 8);
+        const skillValue = Math.max(1, Math.min(99, baseSkill + variance));
+        skills[skill] = skillValue;
+      });
+      return skills;
+    }
+
+    // For other positions
+    const multiplier = 11;
     const skillsToGenerate = ovr * multiplier;
     
     let skillsRemaining = skillsToGenerate;
     
     // Generate skills based on tier importance
-    // Tier 1 has highest priority
     const tierOrder = ['tier1', 'tier2', 'tier3', 'tier4', 'tier5'];
     
     for (const tierName of tierOrder) {
@@ -335,15 +336,29 @@
     grid.innerHTML='';
 
     const skillTiers = POSITION_SKILLS[p.position];
-    const tierNames = ['tier1', 'tier2', 'tier3', 'tier4', 'tier5'];
-    const tierLabels = ['★★★ Top Tier', '★★ Ważne', '★ Przydatne', 'Niche', 'Pozostałe'];
+    
+    // For GK - only show tier1
+    if (p.position === 'GK') {
+      const tierSkills = skillTiers.tier1 || [];
+      if (tierSkills.length > 0) {
+        grid.appendChild(renderSkillsColumn('Umiejętności bramkarza', tierSkills, p));
+      }
+      return;
+    }
 
-    tierNames.forEach((tierName, idx) => {
-      if (tierLabels[idx]) {
-        const tierSkills = skillTiers[tierName] || [];
-        if (tierSkills.length > 0) {
-          grid.appendChild(renderSkillsColumn(tierLabels[idx], tierSkills, p));
-        }
+    // For other positions - show tiers in order
+    const tierOrder = [
+      { name: 'tier1', label: '★★★ Top Tier' },
+      { name: 'tier2', label: '★★ Ważne' },
+      { name: 'tier3', label: '★ Przydatne' },
+      { name: 'tier4', label: 'Niche' },
+      { name: 'tier5', label: 'Pozostałe' }
+    ];
+
+    tierOrder.forEach(tier => {
+      const tierSkills = skillTiers[tier.name] || [];
+      if (tierSkills.length > 0) {
+        grid.appendChild(renderSkillsColumn(tier.label, tierSkills, p));
       }
     });
   }
