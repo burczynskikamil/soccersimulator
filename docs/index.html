@@ -13,23 +13,41 @@
 <body>
   <div class="app">
     <header class="topbar">
-      <h1>League Manager</h1>
+      <h1>⚽ League Manager</h1>
       <nav>
-        <button id="tab-dashboard" class="tab active">Dashboard</button>
-        <button id="tab-players" class="tab">Lista zawodników</button>
+        <button id="tab-dashboard" class="tab active">📊 Panel</button>
+        <button id="tab-players" class="tab">👥 Zawodnicy</button>
+        <button id="tab-teams" class="tab">🏆 Drużyny</button>
       </nav>
       <div class="top-actions">
         <span id="db-status" style="color: #94a3b8; font-size: 12px;">⏳ Łączenie z bazą...</span>
       </div>
     </header>
     <main>
+      <!-- DASHBOARD -->
       <section id="dashboard" class="view">
         <div class="card big">
-          <h2>Dashboard</h2>
-          <p>Panel w przygotowaniu — tutaj później pojawią się statystyki lig, wykresy i skróty.</p>
+          <h2>Welcome to League Manager!</h2>
+          <p>Zarządzaj zawodnikami i drużynami piłkarskimi.</p>
+          <button id="generate-player" class="btn primary btn-generate">➕ Generuj zawodnika</button>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Zawodnicy</h3>
+            <p id="stat-players">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>Drużyny</h3>
+            <p id="stat-teams">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>Całkowita Wartość</h3>
+            <p id="stat-value">€0</p>
+          </div>
         </div>
       </section>
 
+      <!-- PLAYERS VIEW -->
       <section id="players" class="view hidden">
         <div class="filters-section">
           <div class="filter-group">
@@ -51,23 +69,14 @@
             <table id="players-table">
               <thead>
                 <tr>
+                  <th data-sort="position">Pozycja</th>
                   <th data-sort="name">Zawodnik</th>
                   <th data-sort="age">Wiek</th>
                   <th data-sort="country">Kraj</th>
-                  <th data-sort="position">Pozycja</th>
                   <th data-sort="ovr">OVR</th>
                   <th data-sort="potential">Potencjał</th>
-                  <th data-sort="odbior">Odbiór</th>
-                  <th data-sort="krycie">Krycie</th>
-                  <th data-sort="podanie">Podanie</th>
-                  <th data-sort="wizja">Wizja</th>
-                  <th data-sort="szybkosc">Szybkość</th>
-                  <th data-sort="drybling">Drybling</th>
-                  <th data-sort="strzaly">Strzały</th>
-                  <th data-sort="glowki">Główki</th>
-                  <th data-sort="sila">Siła</th>
-                  <th data-sort="przyspieszenie">Przyspieszenie</th>
-                  <th data-sort="kondycja">Kondycja</th>
+                  <th data-sort="value">Wartość</th>
+                  <th>Drużyna</th>
                   <th>Akcje</th>
                 </tr>
               </thead>
@@ -77,11 +86,123 @@
         </div>
       </section>
 
+      <!-- TEAMS VIEW -->
+      <section id="teams" class="view hidden">
+        <div class="filters-section">
+          <button id="create-team-btn" class="btn primary btn-generate">➕ Nowa Drużyna</button>
+        </div>
+
+        <div class="card">
+          <h2>Drużyny</h2>
+          <div class="table-wrap">
+            <table id="teams-table">
+              <thead>
+                <tr>
+                  <th>Logo</th>
+                  <th>Nazwa</th>
+                  <th>Kraj</th>
+                  <th>Zawodnicy</th>
+                  <th>Budżet</th>
+                  <th>Wartość Składu</th>
+                  <th>Akcje</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TEAM CREATE VIEW -->
+      <section id="team-create" class="view hidden">
+        <div class="card player-card">
+          <h2>Utwórz Nową Drużynę</h2>
+          <div class="form-group">
+            <label>Nazwa Drużyny</label>
+            <input type="text" id="team-name" placeholder="np. Manchester United" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>Kraj</label>
+            <select id="team-country" class="form-input">
+              <option value="">Wybierz kraj...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Logo (PNG/JPG)</label>
+            <input type="file" id="team-logo" accept="image/*" class="form-input">
+          </div>
+          <div class="form-actions">
+            <button id="team-form-submit" class="btn primary">Utwórz Drużynę</button>
+            <button id="back-to-teams" class="btn secondary">Wróć</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TEAM DETAIL VIEW -->
+      <section id="team-detail" class="view hidden">
+        <button id="back-to-teams-detail" class="btn btn-back">← Wróć do Drużyn</button>
+        <div class="card player-card">
+          <div class="team-header">
+            <img id="team-detail-logo" src="" alt="Logo" class="team-logo-large">
+            <div class="team-info">
+              <h2 id="team-detail-name"></h2>
+              <p id="team-detail-country"></p>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat">
+              <span class="stat-label">Budżet:</span>
+              <span class="stat-value" id="team-detail-budget"></span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Wartość Składu:</span>
+              <span class="stat-value" id="team-detail-value"></span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Zawodnicy:</span>
+              <span class="stat-value" id="team-detail-players-count"></span>
+            </div>
+          </div>
+
+          <div class="team-edit">
+            <h3>Edytuj Drużynę</h3>
+            <div class="form-group">
+              <label>Budżet (€)</label>
+              <input type="number" id="team-edit-budget" class="form-input">
+            </div>
+            <div class="form-group">
+              <label>Nowe Logo</label>
+              <input type="file" id="team-edit-logo-input" accept="image/*" class="form-input">
+            </div>
+            <button onclick="window.updateTeamBudget()" class="btn primary">Zapisz Zmiany</button>
+          </div>
+
+          <h3 style="margin-top: 30px;">Zawodnicy w Drużynie</h3>
+          <div class="table-wrap">
+            <table id="team-players-table">
+              <thead>
+                <tr>
+                  <th>Pozycja</th>
+                  <th>Imię i Nazwisko</th>
+                  <th>Wiek</th>
+                  <th>OVR</th>
+                  <th>Potencjał</th>
+                  <th>Wartość</th>
+                  <th>Akcja</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PLAYER DETAIL VIEW -->
       <section id="player-view" class="view hidden">
         <div class="card player-card">
           <button id="back-to-list" class="btn btn-back">← Wróć do listy</button>
           <div class="player-header">
-            <img id="pv-avatar-img" class="avatar-img" alt="avatar" />
             <div class="player-info">
               <h2 id="pv-name"></h2>
               <div id="pv-country"></div>
@@ -90,15 +211,23 @@
                 <span>Pozycja: <strong id="pv-position"></strong></span>
                 <span>OVR: <strong id="pv-ovr"></strong></span>
                 <span>Potencjał: <strong id="pv-potential"></strong></span>
+                <span>Wartość: <strong id="pv-value"></strong></span>
                 <span>Wzrost: <strong id="pv-growth"></strong></span>
+                <span>Drużyna: <strong id="pv-team"></strong></span>
               </div>
             </div>
           </div>
 
+          <div class="team-assignment">
+            <h3>Przypisz do Drużyny</h3>
+            <select id="pv-team-select" class="form-input"></select>
+            <button id="pv-assign-team" class="btn primary">Przypisz</button>
+          </div>
+
+          <h3 style="margin-top: 30px;">Umiejętności</h3>
           <div class="player-body skills-grid" id="pv-skills-grid">
             <!-- skills columns will be rendered here -->
           </div>
-
         </div>
       </section>
 
