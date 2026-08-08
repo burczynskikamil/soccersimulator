@@ -21,52 +21,52 @@
     'GK': 'Bramkarz'
   };
 
-  // Position-based skill probabilities (each skill has individual percentage, totaling 100%)
-  const SKILL_PROBABILITIES = {
-    'ST': [
-      { skill: 'Strzały', prob: 0.10 },
-      { skill: 'Główki', prob: 0.10 },
-      { skill: 'Siła', prob: 0.09 },
-      { skill: 'Szybkość', prob: 0.09 },
-      { skill: 'Kondycja', prob: 0.09 },
-      { skill: 'Drybling', prob: 0.08 },
-      { skill: 'Przyspieszenie', prob: 0.08 },
-      { skill: 'Podanie', prob: 0.07 },
-      { skill: 'Wizja', prob: 0.07 },
-      { skill: 'Odbiór', prob: 0.03 },
-      { skill: 'Krycie', prob: 0.03 }
-    ],
-    'CM': [
-      { skill: 'Podanie', prob: 0.10 },
-      { skill: 'Wizja', prob: 0.10 },
-      { skill: 'Kondycja', prob: 0.09 },
-      { skill: 'Szybkość', prob: 0.09 },
-      { skill: 'Drybling', prob: 0.09 },
-      { skill: 'Odbiór', prob: 0.08 },
-      { skill: 'Przyspieszenie', prob: 0.08 },
-      { skill: 'Strzały', prob: 0.08 },
-      { skill: 'Krycie', prob: 0.06 },
-      { skill: 'Główki', prob: 0.06 },
-      { skill: 'Siła', prob: 0.06 }
-    ],
-    'CB': [
-      { skill: 'Odbiór', prob: 0.10 },
-      { skill: 'Krycie', prob: 0.10 },
-      { skill: 'Siła', prob: 0.09 },
-      { skill: 'Szybkość', prob: 0.09 },
-      { skill: 'Główki', prob: 0.09 },
-      { skill: 'Podanie', prob: 0.08 },
-      { skill: 'Przyspieszenie', prob: 0.08 },
-      { skill: 'Wizja', prob: 0.08 },
-      { skill: 'Strzały', prob: 0.05 },
-      { skill: 'Drybling', prob: 0.05 },
-      { skill: 'Kondycja', prob: 0.05 }
-    ],
-    'GK': [
-      { skill: 'Sam na sam', prob: 0.3333 },
-      { skill: 'Obrona strzałów', prob: 0.3333 },
-      { skill: 'Łapanie', prob: 0.3334 }
-    ]
+  // Position-based skill weights - what each position emphasizes
+  const SKILL_WEIGHTS = {
+    'ST': {
+      'Strzały': 10,
+      'Główki': 10,
+      'Siła': 9,
+      'Szybkość': 9,
+      'Kondycja': 9,
+      'Drybling': 8,
+      'Przyspieszenie': 8,
+      'Podanie': 7,
+      'Wizja': 7,
+      'Odbiór': 3,
+      'Krycie': 3
+    },
+    'CM': {
+      'Podanie': 10,
+      'Wizja': 10,
+      'Kondycja': 9,
+      'Szybkość': 9,
+      'Drybling': 9,
+      'Odbiór': 8,
+      'Przyspieszenie': 8,
+      'Strzały': 8,
+      'Krycie': 6,
+      'Główki': 6,
+      'Siła': 6
+    },
+    'CB': {
+      'Odbiór': 10,
+      'Krycie': 10,
+      'Siła': 9,
+      'Szybkość': 9,
+      'Główki': 9,
+      'Podanie': 8,
+      'Przyspieszenie': 8,
+      'Wizja': 8,
+      'Strzały': 5,
+      'Drybling': 5,
+      'Kondycja': 5
+    },
+    'GK': {
+      'Sam na sam': 100,
+      'Obrona strzałów': 100,
+      'Łapanie': 100
+    }
   };
 
   // Position-based skill tiers (for display purposes)
@@ -204,36 +204,32 @@
     return { min: minHidden, max: maxHidden };
   }
 
-  function getSkillByProbability(probabilities) {
-    const rand = Math.random();
-    let cumulative = 0;
-    
-    for (let i = 0; i < probabilities.length; i++) {
-      cumulative += probabilities[i].prob;
-      // Last element always matches, or we found a match
-      if (i === probabilities.length - 1 || rand < cumulative) {
-        return probabilities[i].skill;
-      }
-    }
-  }
-
   function generateSkills(ovr, position) {
-    // Initialize skills object with all skills for this position set to 0
     const skills = {};
-    const probs = SKILL_PROBABILITIES[position];
+    const weights = SKILL_WEIGHTS[position];
     
-    // Set all skills to 0
-    for (let skillObj of probs) {
-      skills[skillObj.skill] = 0;
+    // Initialize all skills to 0
+    for (let skill in weights) {
+      skills[skill] = 0;
     }
 
-    // Calculate total points
+    // Calculate total points to distribute
     const multiplier = position === 'GK' ? 3 : 11;
     const totalPoints = ovr * multiplier;
 
-    // Distribute points one by one using probability-weighted selection
+    // Build a weighted array: if skill has weight 10, add it 10 times
+    const weightedSkills = [];
+    for (let skill in weights) {
+      const weight = weights[skill];
+      for (let i = 0; i < weight; i++) {
+        weightedSkills.push(skill);
+      }
+    }
+
+    // Distribute points: randomly pick from weighted array
     for (let i = 0; i < totalPoints; i++) {
-      const selectedSkill = getSkillByProbability(probs);
+      const randomIndex = Math.floor(Math.random() * weightedSkills.length);
+      const selectedSkill = weightedSkills[randomIndex];
       skills[selectedSkill]++;
     }
 
