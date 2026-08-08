@@ -77,6 +77,14 @@
     }
   };
 
+  const CATEGORY_COLORS = {
+    'Ofensywne': { bg: '#ff4d4f', text: '#fff' },
+    'Fizyczne': { bg: '#faad14', text: '#000' },
+    'Defensywne': { bg: '#1890ff', text: '#fff' },
+    'Techniczne': { bg: '#52c41a', text: '#fff' },
+    'Bramkarskie': { bg: '#1890ff', text: '#fff' }
+  };
+
   // Position-based skill weights
   const SKILL_WEIGHTS = {
     'ST': {
@@ -153,6 +161,15 @@
       filterCountry.appendChild(opt); 
     });
 
+    // Populate team country select
+    const teamCountrySelect = el('team-country');
+    COUNTRIES.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.code;
+      opt.textContent = c.name;
+      teamCountrySelect.appendChild(opt);
+    });
+
     document.getElementById('tab-dashboard').addEventListener('click', ()=>showTab('dashboard'));
     document.getElementById('tab-players').addEventListener('click', ()=>showTab('players'));
     document.getElementById('tab-teams').addEventListener('click', ()=>{showTab('teams'); renderTeamsList();});
@@ -160,6 +177,7 @@
     document.getElementById('create-team-btn').addEventListener('click', ()=>showTab('team-create'));
     document.getElementById('back-to-list').addEventListener('click', ()=>showTab('players'));
     document.getElementById('back-to-teams').addEventListener('click', ()=>showTab('teams'));
+    document.getElementById('back-to-teams-detail').addEventListener('click', ()=>showTab('teams'));
     document.getElementById('team-form-submit').addEventListener('click', saveTeam);
 
     document.querySelectorAll('#players-table thead th[data-sort]').forEach(th=>th.addEventListener('click', ()=>{sortBy(th.dataset.sort)}));
@@ -167,6 +185,7 @@
     searchInput.addEventListener('input', renderList);
 
     renderList();
+    updateStats();
   }
 
   function showTab(name){ 
@@ -287,6 +306,7 @@
     await window.db.savePlayers(players);
     dbStatus.textContent = '✅ Zawodnik zapisany';
     renderList();
+    updateStats();
   }
 
   async function saveTeam(){
@@ -325,6 +345,7 @@
     
     showTab('teams');
     renderTeamsList();
+    updateStats();
   }
 
   function fileToBase64(file) {
@@ -430,6 +451,7 @@
     dbStatus.textContent = '✅ Drużyna usunięta';
     showTab('teams');
     renderTeamsList();
+    updateStats();
   }
 
   async function removePlayerFromTeam(playerId){
@@ -439,6 +461,13 @@
       await window.db.savePlayers(players);
       renderTeamPlayersTable(currentTeamId);
     }
+  }
+
+  function updateStats(){
+    const totalValue = players.reduce((sum, p) => sum + (p.value || 0), 0);
+    el('stat-players').textContent = players.length;
+    el('stat-teams').textContent = teams.length;
+    el('stat-value').textContent = `€${totalValue.toLocaleString('pl-PL')}`;
   }
 
   function sample(x){ return x[Math.floor(Math.random()*x.length)]; }
@@ -489,6 +518,7 @@
     await window.db.savePlayers(players);
     dbStatus.textContent = '✅ Zawodnik usunięty';
     renderList();
+    updateStats();
   }
 
   function showPlayer(id){
@@ -537,18 +567,18 @@
     for (let category in categories) {
       const skills = categories[category];
       const imp = importance[category];
-      let bgColor = '#e8e8e8';
-      if (imp === 'primary') bgColor = '#b19cd9';
-      else if (imp === 'secondary') bgColor = '#90EE90';
+      const categoryColors = CATEGORY_COLORS[category];
       
       const col = document.createElement('div');
       col.className='skills-column';
-      col.style.backgroundColor = bgColor;
+      col.style.backgroundColor = categoryColors.bg;
+      col.style.color = categoryColors.text;
       col.style.borderRadius = '8px';
       col.style.padding = '12px';
       
       const h = document.createElement('h4');
       h.textContent = category;
+      h.style.color = categoryColors.text;
       col.appendChild(h);
       
       skills.forEach(k=>{
@@ -556,7 +586,8 @@
           const row = document.createElement('div');
           row.className='skill-row';
           const pct = (p.skills[k]/99)*100;
-          row.innerHTML = `<div class="skill-name">${k}</div><div class="skill-bar"><div class="skill-fill" style="width:${pct}%;background:#333"></div></div><div class="skill-val">${p.skills[k]}</div>`;
+          row.innerHTML = `<div class="skill-name">${k}</div><div class="skill-bar"><div class="skill-fill" style="width:${pct}%;background:${categoryColors.text};opacity:0.8"></div></div><div class="skill-val">${p.skills[k]}</div>`;
+          row.style.color = categoryColors.text;
           col.appendChild(row);
         }
       });
