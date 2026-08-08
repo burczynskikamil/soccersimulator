@@ -19,8 +19,6 @@
         <button id="tab-players" class="tab">Lista zawodników</button>
       </nav>
       <div class="top-actions">
-        <button id="save-json" class="btn">💾 Zapisz JSON</button>
-        <label class="btn file">📂 Wczytaj<input id="load-json" type="file" accept="application/json"/></label>
         <span id="db-status" style="color: #94a3b8; font-size: 12px;">⏳ Łączenie z bazą...</span>
       </div>
     </header>
@@ -33,16 +31,18 @@
       </section>
 
       <section id="players" class="view hidden">
-        <div class="toolbar">
-          <div>
-            <button id="generate-player" class="btn primary">Generuj zawodnika</button>
+        <div class="filters-section">
+          <div class="filter-group">
+            <label>Filtruj kraj:</label>
+            <select id="filter-country" class="filter-select">
+              <option value="">Wszystkie</option>
+            </select>
           </div>
-          <div>
-            <label>Filtruj kraj:
-              <select id="filter-country"><option value="">Wszystkie</option></select>
-            </label>
-            <label>Wyszukaj: <input id="search" placeholder="Imię lub nazwisko" /></label>
+          <div class="filter-group">
+            <label>Wyszukaj:</label>
+            <input id="search" class="filter-input" placeholder="Imię lub nazwisko..." />
           </div>
+          <button id="generate-player" class="btn primary btn-generate">➕ Generuj zawodnika</button>
         </div>
 
         <div class="card">
@@ -55,12 +55,18 @@
                   <th data-sort="age">Wiek</th>
                   <th data-sort="country">Kraj</th>
                   <th data-sort="ovr">OVR</th>
-                  <th data-sort="potential">Potencjał (ukryty)</th>
+                  <th data-sort="potential">Potencjał</th>
                   <th data-sort="odbior">Odbiór</th>
                   <th data-sort="krycie">Krycie</th>
                   <th data-sort="podanie">Podanie</th>
                   <th data-sort="wizja">Wizja</th>
                   <th data-sort="szybkosc">Szybkość</th>
+                  <th data-sort="drybling">Drybling</th>
+                  <th data-sort="strzaly">Strzały</th>
+                  <th data-sort="glowki">Główki</th>
+                  <th data-sort="sila">Siła</th>
+                  <th data-sort="przyspieszenie">Przyspieszenie</th>
+                  <th data-sort="kondycja">Kondycja</th>
                   <th>Akcje</th>
                 </tr>
               </thead>
@@ -72,13 +78,17 @@
 
       <section id="player-view" class="view hidden">
         <div class="card player-card">
-          <button id="back-to-list" class="btn">← Wróć</button>
+          <button id="back-to-list" class="btn btn-back">← Wróć do listy</button>
           <div class="player-header">
             <img id="pv-avatar-img" class="avatar-img" alt="avatar" />
-            <div>
+            <div class="player-info">
               <h2 id="pv-name"></h2>
               <div id="pv-country"></div>
-              <div>Wiek: <span id="pv-age"></span> — Potencjał: <span id="pv-potential"></span> (<span id="pv-hidden"></span>)</div>
+              <div class="player-meta">
+                <span>Wiek: <strong id="pv-age"></strong></span>
+                <span>Potencjał: <strong id="pv-potential"></strong></span>
+                <span>OVR: <strong id="pv-ovr"></strong></span>
+              </div>
             </div>
           </div>
 
@@ -91,7 +101,7 @@
 
     </main>
 
-    <footer class="footer">SoccerSimulator — League Manager • Dane przechowywane w bazie Supabase</footer>
+    <footer class="footer">SoccerSimulator — League Manager • Dane w Supabase</footer>
   </div>
 
   <script src="db.js"></script>
