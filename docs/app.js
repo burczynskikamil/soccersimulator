@@ -21,7 +21,55 @@
     'GK': 'Bramkarz'
   };
 
-  // Position-based skill tiers (lower tier = more important)
+  // Position-based skill probabilities (each skill has individual percentage)
+  const SKILL_PROBABILITIES = {
+    'ST': [
+      { skill: 'Strzały', prob: 0.05 },
+      { skill: 'Główki', prob: 0.05 },
+      { skill: 'Siła', prob: 0.04 },
+      { skill: 'Szybkość', prob: 0.04 },
+      { skill: 'Kondycja', prob: 0.04 },
+      { skill: 'Drybling', prob: 0.03 },
+      { skill: 'Przyspieszenie', prob: 0.03 },
+      { skill: 'Podanie', prob: 0.02 },
+      { skill: 'Wizja', prob: 0.02 },
+      { skill: 'Odbiór', prob: 0.01 },
+      { skill: 'Krycie', prob: 0.01 }
+    ],
+    'CM': [
+      { skill: 'Podanie', prob: 0.05 },
+      { skill: 'Wizja', prob: 0.05 },
+      { skill: 'Kondycja', prob: 0.04 },
+      { skill: 'Szybkość', prob: 0.04 },
+      { skill: 'Drybling', prob: 0.04 },
+      { skill: 'Odbiór', prob: 0.03 },
+      { skill: 'Przyspieszenie', prob: 0.03 },
+      { skill: 'Strzały', prob: 0.03 },
+      { skill: 'Krycie', prob: 0.02 },
+      { skill: 'Główki', prob: 0.02 },
+      { skill: 'Siła', prob: 0.02 }
+    ],
+    'CB': [
+      { skill: 'Odbiór', prob: 0.05 },
+      { skill: 'Krycie', prob: 0.05 },
+      { skill: 'Siła', prob: 0.04 },
+      { skill: 'Szybkość', prob: 0.04 },
+      { skill: 'Główki', prob: 0.04 },
+      { skill: 'Podanie', prob: 0.03 },
+      { skill: 'Przyspieszenie', prob: 0.03 },
+      { skill: 'Wizja', prob: 0.03 },
+      { skill: 'Strzały', prob: 0.02 },
+      { skill: 'Drybling', prob: 0.02 },
+      { skill: 'Kondycja', prob: 0.02 }
+    ],
+    'GK': [
+      { skill: 'Sam na sam', prob: 0.3333 },
+      { skill: 'Obrona strzałów', prob: 0.3333 },
+      { skill: 'Łapanie', prob: 0.3334 }
+    ]
+  };
+
+  // Position-based skill tiers (for display purposes)
   const POSITION_SKILLS = {
     'ST': {
       tier1: ['Strzały', 'Główki'],
@@ -46,20 +94,6 @@
       tier1: ['Sam na sam', 'Obrona strzałów', 'Łapanie']
     }
   };
-
-  // Tier probabilities for field players (5 tiers)
-  const TIER_PROBABILITIES_5 = [
-    { tier: 'tier1', prob: 0.25 },
-    { tier: 'tier2', prob: 0.23 },
-    { tier: 'tier3', prob: 0.20 },
-    { tier: 'tier4', prob: 0.17 },
-    { tier: 'tier5', prob: 0.15 }
-  ];
-
-  // Tier probabilities for GK (1 tier)
-  const TIER_PROBABILITIES_GK = [
-    { tier: 'tier1', prob: 1.0 }
-  ];
 
   // Height generation weights by position (cm ranges)
   const HEIGHT_RANGES = {
@@ -180,18 +214,18 @@
     return { min: minHidden, max: maxHidden };
   }
 
-  function getTierByProbability(position) {
-    const probs = position === 'GK' ? TIER_PROBABILITIES_GK : TIER_PROBABILITIES_5;
+  function getSkillByProbability(position) {
+    const probs = SKILL_PROBABILITIES[position];
     const rand = Math.random();
     let cumulative = 0;
 
-    for (let tierObj of probs) {
-      cumulative += tierObj.prob;
+    for (let skillObj of probs) {
+      cumulative += skillObj.prob;
       if (rand <= cumulative) {
-        return tierObj.tier;
+        return skillObj.skill;
       }
     }
-    return probs[0].tier; // fallback
+    return probs[0].skill; // fallback
   }
 
   function generateSkills(ovr, position) {
@@ -216,14 +250,8 @@
 
     // Distribute points one by one
     for (let i = 0; i < totalPoints; i++) {
-      // Select tier by probability
-      const tier = getTierByProbability(position);
-      const tierSkills = skillTiers[tier] || [];
-
-      if (tierSkills.length === 0) continue;
-
-      // Select random skill from that tier
-      const skill = tierSkills[Math.floor(Math.random() * tierSkills.length)];
+      // Select skill by probability
+      const skill = getSkillByProbability(position);
 
       // Add 1 point to skill
       if (skill in skills) {
