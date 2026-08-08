@@ -170,17 +170,32 @@
       teamCountrySelect.appendChild(opt);
     });
 
-    document.getElementById('tab-dashboard').addEventListener('click', ()=>showTab('dashboard'));
-    document.getElementById('tab-players').addEventListener('click', ()=>showTab('players'));
-    document.getElementById('tab-teams').addEventListener('click', ()=>{showTab('teams'); renderTeamsList();});
-    document.getElementById('generate-player').addEventListener('click', generateAndSave);
-    document.getElementById('create-team-btn').addEventListener('click', ()=>showTab('team-create'));
-    document.getElementById('back-to-list').addEventListener('click', ()=>showTab('players'));
-    document.getElementById('back-to-teams').addEventListener('click', ()=>showTab('teams'));
-    document.getElementById('back-to-teams-detail').addEventListener('click', ()=>showTab('teams'));
-    document.getElementById('team-form-submit').addEventListener('click', saveTeam);
+    // Tab navigation
+    el('tab-dashboard').addEventListener('click', () => showTab('dashboard'));
+    el('tab-players').addEventListener('click', () => showTab('players'));
+    el('tab-teams').addEventListener('click', () => {
+      showTab('teams');
+      renderTeamsList();
+    });
 
-    document.querySelectorAll('#players-table thead th[data-sort]').forEach(th=>th.addEventListener('click', ()=>{sortBy(th.dataset.sort)}));
+    // Generate player buttons - ALL of them
+    const generateBtns = document.querySelectorAll('#generate-player');
+    generateBtns.forEach(btn => {
+      btn.addEventListener('click', generateAndSave);
+    });
+
+    // Team buttons
+    el('create-team-btn').addEventListener('click', () => showTab('team-create'));
+    el('back-to-list').addEventListener('click', () => showTab('players'));
+    el('back-to-teams').addEventListener('click', () => showTab('teams'));
+    el('back-to-teams-detail').addEventListener('click', () => showTab('teams'));
+    el('team-form-submit').addEventListener('click', saveTeam);
+
+    // Table sorting
+    document.querySelectorAll('#players-table thead th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => sortBy(th.dataset.sort));
+    });
+
     filterCountry.addEventListener('change', renderList);
     searchInput.addEventListener('input', renderList);
 
@@ -189,10 +204,10 @@
   }
 
   function showTab(name){ 
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); 
-    const tabEl = document.getElementById('tab-'+name);
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); 
+    const tabEl = document.getElementById('tab-' + name);
     if(tabEl) tabEl.classList.add('active'); 
-    document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden')); 
+    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden')); 
     const viewEl = document.getElementById(name);
     if(viewEl) viewEl.classList.remove('hidden'); 
   }
