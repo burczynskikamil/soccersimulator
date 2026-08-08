@@ -16,80 +16,35 @@ async function initSupabase() {
 
 async function initializeDatabase() {
   try {
-    // Check if players table exists by trying to fetch data
+    // Check if players table exists
     const { data, error } = await supabaseClient
       .from('players')
       .select('id')
       .limit(1);
     
     if (error && error.code === 'PGRST116') {
-      // Table doesn't exist, create it
-      console.log('📊 Creating players table...');
-      await createPlayersTable();
+      console.log('📊 Players table needs to be created in Supabase console');
     } else {
       console.log('✅ Players table exists');
+    }
+
+    // Check if teams table exists
+    const { error: teamsError } = await supabaseClient
+      .from('teams')
+      .select('id')
+      .limit(1);
+    
+    if (teamsError && teamsError.code === 'PGRST116') {
+      console.log('📊 Teams table needs to be created in Supabase console');
+    } else {
+      console.log('✅ Teams table exists');
     }
   } catch (err) {
     console.error('Database init error:', err);
   }
 }
 
-async function createPlayersTable() {
-  try {
-    // Using PostgREST to create table via SQL
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-      }
-    });
-    
-    // Alternative: Create table using RPC or direct SQL through admin
-    // For now, table must exist - user should create via Supabase console
-    console.log('⚠️ Please create "players" table in Supabase console or use SQL:');
-    console.log(`
-CREATE TABLE players (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  age INTEGER NOT NULL,
-  position TEXT DEFAULT 'ST',
-  country TEXT NOT NULL,
-  country_name TEXT NOT NULL,
-  country_flag TEXT,
-  country_color TEXT,
-  height_cm INTEGER DEFAULT 180,
-  potential INTEGER,
-  real_potential INTEGER,
-  hidden_potential_min INTEGER,
-  hidden_potential_max INTEGER,
-  ovr INTEGER,
-  growth_rate DECIMAL(3,2) DEFAULT 0.65,
-  skills JSONB,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-
-ALTER TABLE players ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Enable read access for all users" ON players
-  FOR SELECT USING (true);
-
-CREATE POLICY "Enable insert for all users" ON players
-  FOR INSERT WITH CHECK (true);
-
-CREATE POLICY "Enable update for all users" ON players
-  FOR UPDATE USING (true);
-
-CREATE POLICY "Enable delete for all users" ON players
-  FOR DELETE USING (true);
-    `);
-  } catch (err) {
-    console.error('Table creation error:', err);
-  }
-}
+// ============ PLAYERS ============
 
 async function savePlayers(players) {
   if (!supabaseClient) await initSupabase();
@@ -112,12 +67,13 @@ async function savePlayers(players) {
           country_flag: p.countryFlag,
           country_color: p.countryColor,
           height_cm: p.height,
-          potential: p.potential,
           real_potential: p.realPotential,
           hidden_potential_min: p.hiddenPotentialMin,
           hidden_potential_max: p.hiddenPotentialMax,
           ovr: p.ovr,
           growth_rate: p.growth,
+          value: p.value || 0,
+          team_id: p.teamId || null,
           skills: p.skills
         }))
       );
@@ -125,7 +81,7 @@ async function savePlayers(players) {
     if (error) throw error;
     console.log('💾 Players saved to database');
   } catch (err) {
-    console.error('Save error:', err);
+    console.error('Save players error:', err);
     throw err;
   }
 }
@@ -153,17 +109,18 @@ async function loadPlayers() {
       countryFlag: p.country_flag,
       countryColor: p.country_color,
       height: p.height_cm || 180,
-      potential: p.potential,
       realPotential: p.real_potential,
       hiddenPotentialMin: p.hidden_potential_min,
       hiddenPotentialMax: p.hidden_potential_max,
       ovr: p.ovr,
       growth: p.growth_rate || 0.65,
+      value: p.value || 0,
+      teamId: p.team_id || null,
       skills: p.skills || {},
       created: p.created_at ? new Date(p.created_at).getTime() : Date.now()
     }));
   } catch (err) {
-    console.error('Load error:', err);
+    console.error('Load players error:', err);
     return [];
   }
 }
@@ -180,7 +137,86 @@ async function deletePlayer(id) {
     if (error) throw error;
     console.log('🗑️ Player deleted from database');
   } catch (err) {
-    console.error('Delete error:', err);
+    console.error('Delete player error:', err);
+    throw err;
+  }
+}
+
+// ============ TEAMS ============
+
+async function saveTeams(teams) {
+  if (!supabaseClient) await initSupabase();
+  
+  try {
+    // Delete all existing teams
+    await supabaseClient.from('teams').delete().neq('id', '');
+    
+    // Insert new teams
+    const { error } = await supabaseClient
+      .from('teams')
+      .insert(
+        teams.map(t => ({
+          id: t.id,
+          name: t.name,
+          country: t.country,
+          country_name: t.countryName,
+          country_flag: t.countryFlag,
+          logo: t.logo || null,
+          budget: t.budget || 1000000,
+          created_at: new Date(t.created).toISOString()
+        }))
+      );
+    
+    if (error) throw error;
+    console.log('💾 Teams saved to database');
+  } catch (err) {
+    console.error('Save teams error:', err);
+    throw err;
+  }
+}
+
+async function loadTeams() {
+  if (!supabaseClient) await initSupabase();
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('teams')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    
+    console.log(`📥 Loaded ${data.length} teams from database`);
+    
+    return (data || []).map(t => ({
+      id: t.id,
+      name: t.name,
+      country: t.country,
+      countryName: t.country_name,
+      countryFlag: t.country_flag,
+      logo: t.logo || null,
+      budget: t.budget || 1000000,
+      created: t.created_at ? new Date(t.created_at).getTime() : Date.now()
+    }));
+  } catch (err) {
+    console.error('Load teams error:', err);
+    return [];
+  }
+}
+
+async function deleteTeam(id) {
+  if (!supabaseClient) await initSupabase();
+  
+  try {
+    const { error } = await supabaseClient
+      .from('teams')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    console.log('🗑️ Team deleted from database');
+  } catch (err) {
+    console.error('Delete team error:', err);
     throw err;
   }
 }
@@ -190,5 +226,8 @@ window.db = {
   initSupabase,
   savePlayers,
   loadPlayers,
-  deletePlayer
+  deletePlayer,
+  saveTeams,
+  loadTeams,
+  deleteTeam
 };
