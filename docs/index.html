@@ -8,6 +8,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="app">
@@ -18,8 +19,9 @@
         <button id="tab-players" class="tab">Lista zawodników</button>
       </nav>
       <div class="top-actions">
-        <button id="save-json" class="btn">Save</button>
-        <label class="btn file">Load<input id="load-json" type="file" accept="application/json"/></label>
+        <button id="save-json" class="btn">💾 Zapisz JSON</button>
+        <label class="btn file">📂 Wczytaj<input id="load-json" type="file" accept="application/json"/></label>
+        <span id="db-status" style="color: #94a3b8; font-size: 12px;">⏳ Łączenie z bazą...</span>
       </div>
     </header>
     <main>
@@ -89,9 +91,10 @@
 
     </main>
 
-    <footer class="footer">SoccerSimulator — League Manager • statyczna aplikacja na GitHub Pages</footer>
+    <footer class="footer">SoccerSimulator — League Manager • Dane przechowywane w bazie Supabase</footer>
   </div>
 
+  <script src="db.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
