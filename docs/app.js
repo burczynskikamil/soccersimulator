@@ -248,6 +248,13 @@
     const multiplier = position === 'GK' ? 3 : 11;
     const totalPoints = ovr * multiplier;
 
+    console.log(`\n=== GENERATING SKILLS FOR ${position} (OVR: ${ovr}) ===`);
+    console.log(`Total points to distribute: ${totalPoints}`);
+    console.log(`Expected breakdown:`);
+    SKILL_PROBABILITIES[position].forEach(s => {
+      console.log(`  ${s.skill}: ${(s.prob * 100).toFixed(1)}% = ~${(totalPoints * s.prob).toFixed(1)} points`);
+    });
+
     // Distribute points one by one
     for (let i = 0; i < totalPoints; i++) {
       // Select skill by probability
@@ -258,6 +265,11 @@
         skills[skill]++;
       }
     }
+
+    console.log(`\nActual distribution:`);
+    SKILL_PROBABILITIES[position].forEach(s => {
+      console.log(`  ${s.skill}: ${skills[s.skill] || 0} points`);
+    });
 
     return skills;
   }
