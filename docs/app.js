@@ -208,15 +208,13 @@
     const rand = Math.random();
     let cumulative = 0;
     
-    for (let skillObj of probabilities) {
-      cumulative += skillObj.prob;
-      if (rand <= cumulative) {
-        return skillObj.skill;
+    for (let i = 0; i < probabilities.length; i++) {
+      cumulative += probabilities[i].prob;
+      // Last element always matches, or we found a match
+      if (i === probabilities.length - 1 || rand < cumulative) {
+        return probabilities[i].skill;
       }
     }
-    
-    // Fallback - shouldn't happen if probabilities sum to 1
-    return probabilities[probabilities.length - 1].skill;
   }
 
   function generateSkills(ovr, position) {
