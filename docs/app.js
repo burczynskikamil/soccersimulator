@@ -1,4 +1,4 @@
-// app.js - fixed: proper tab switching, skill generation, database loading
+// app.js - with positions, position-based skills, hidden potential, and position-based OVR
 (() => {
   const COUNTRIES = [
     {code:'PL',name:'Polska',flag:'https://flagsapi.com/PL/flat/64.png',color:'#ff4d4f'},
@@ -13,6 +13,83 @@
     {code:'ZA',name:'RPA',flag:'https://flagsapi.com/ZA/flat/64.png',color:'#f77f00'},
   ];
 
+  const POSITIONS = ['ST', 'CM', 'CB', 'GK'];
+  const POSITION_NAMES = {
+    'ST': 'Napastnik',
+    'CM': 'Pomocnik',
+    'CB': 'Obrońca',
+    'GK': 'Bramkarz'
+  };
+
+  // Position-based skill importance (weights for OVR calculation)
+  const POSITION_WEIGHTS = {
+    'ST': {
+      'Strzały': 10,
+      'Główki': 10,
+      'Siła': 8,
+      'Szybkość': 8,
+      'Przyspieszenie': 8,
+      'Drybling': 6,
+      'Kondycja': 6,
+      'Podanie': 4,
+      'Wizja': 4,
+      'Odbiór': 1,
+      'Krycie': 1
+    },
+    'CM': {
+      'Podanie': 10,
+      'Wizja': 10,
+      'Kondycja': 8,
+      'Szybkość': 8,
+      'Drybling': 8,
+      'Odbiór': 6,
+      'Strzały': 4,
+      'Krycie': 3,
+      'Przyspieszenie': 3,
+      'Główki': 2,
+      'Siła': 2
+    },
+    'CB': {
+      'Odbiór': 10,
+      'Krycie': 10,
+      'Siła': 10,
+      'Główki': 8,
+      'Szybkość': 8,
+      'Podanie': 6,
+      'Przyspieszenie': 6,
+      'Wizja': 3,
+      'Strzały': 2,
+      'Drybling': 2,
+      'Kondycja': 2
+    },
+    'GK': {
+      'Obrona strzałów': 10,
+      'Sam na sam': 10,
+      'Stałe fragmenty gry': 8,
+      'Podanie': 6,
+      'Wizja': 6,
+      'Szybkość': 5,
+      'Siła': 5,
+      'Przyspieszenie': 5,
+      'Kondycja': 4
+    }
+  };
+
+  // Position-specific growth rates
+  const GROWTH_RATES = {
+    'ST': { min: 0.6, max: 0.8 },
+    'CM': { min: 0.5, max: 0.7 },
+    'CB': { min: 0.5, max: 0.7 },
+    'GK': { min: 0.7, max: 0.9 }
+  };
+
+  const SKILLS_BY_POSITION = {
+    'ST': ['Strzały','Główki','Siła','Szybkość','Przyspieszenie','Drybling','Kondycja','Podanie','Wizja','Odbiór','Krycie'],
+    'CM': ['Podanie','Wizja','Kondycja','Szybkość','Drybling','Odbiór','Strzały','Krycie','Przyspieszenie','Główki','Siła'],
+    'CB': ['Odbiór','Krycie','Siła','Główki','Szybkość','Podanie','Przyspieszenie','Wizja','Strzały','Drybling','Kondycja'],
+    'GK': ['Obrona strzałów','Sam na sam','Stałe fragmenty gry','Podanie','Wizja','Szybkość','Siła','Przyspieszenie','Kondycja']
+  };
+
   const NAME_POOL = {
     PL: {first:['Jan','Kacper','Jakub','Mateusz','Piotr','Filip','Michał','Oskar','Szymon','Kamil'],last:['Nowak','Kowalski','Wiśniewski','Wójcik','Kubiak','Kaczmarek','Kamiński','Lewandowski','Zieliński','Sikora']},
     NL: {first:['Daan','Luca','Bram','Finn','Sem','Tijn','Luuk','Sven','Milan','Davy'],last:['de Jong','Jansen','van Dijk','Bakker','Visser','Smit','de Vries','Mulder','Bos','Kuipers']},
@@ -26,9 +103,6 @@
     ZA: {first:['Liam','Noah','Ethan','Logan','Daniel','Jayden','Ryan','Tyler','Jordan','Kyle'],last:['Nkosi','Dlamini','Nkuna','Mthethwa','van der Merwe','Botha','Smith','Mabuza','Mokwena','Khumalo']},
   };
 
-  const SKILLS = ['Odbiór','Krycie','Podanie','Wizja','Szybkość','Drybling','Strzały','Główki','Siła','Przyspieszenie','Kondycja'];
-  const GK_SKILLS = ['Obrona strzałów','Łapanie','Sam na sam'];
-
   const el = id => document.getElementById(id);
   const $table = document.querySelector('#players-table tbody');
   const filterCountry = el('filter-country');
@@ -40,16 +114,13 @@
 
   async function init(){
     try {
-      // Initialize Supabase connection
       dbStatus.textContent = '⏳ Inicjalizacja bazy danych...';
       await window.db.initSupabase();
       dbStatus.textContent = '✅ Baza danych połączona';
       
-      // Load players from database
       players = await window.db.loadPlayers();
       console.log('Loaded players:', players.length);
       
-      // If no players, generate initial ones
       if(players.length === 0) {
         dbStatus.textContent = '📝 Generowanie zawodników...';
         for(let i=0; i<8; i++) {
@@ -96,19 +167,31 @@
   function generatePlayer(){
     const age = 11; 
     const country = sample(COUNTRIES); 
-    const isGK = Math.random() < 0.08; 
+    const position = sample(POSITIONS);
     const potential = samplePotential(); 
     const id = uid(); 
     const name = generateUniqueName(country.code, players);
     const skills = {}; 
-    if(isGK){ 
-      GK_SKILLS.forEach(s=>skills[s]=initialSkillForPotential(potential)); 
-    } else { 
-      SKILLS.forEach(s=>skills[s]=initialSkillForPotential(potential)); 
-    }
-    const sum = Object.values(skills).reduce((a,b)=>a+b,0); 
-    const ovr = Math.min(99, Math.round(sum / Object.values(skills).length));
-    return { id, name, age, country: country.code, countryName: country.name, countryFlag: country.flag, countryColor: country.color, isGK, potential, skills, ovr, created: Date.now() };
+    const skillsList = SKILLS_BY_POSITION[position];
+    
+    skillsList.forEach(s => {
+      skills[s] = initialSkillForPotential(potential, position, s);
+    });
+
+    const ovr = calculatePositionalOVR(skills, position);
+    const growth = generateGrowth(position);
+
+    return { 
+      id, name, age, position, 
+      country: country.code, countryName: country.name, countryFlag: country.flag, countryColor: country.color, 
+      potential, realPotential: potential, // realPotential is hidden
+      skills, ovr, growth, created: Date.now() 
+    };
+  }
+
+  function generateGrowth(position) {
+    const rates = GROWTH_RATES[position];
+    return randInt(Math.round(rates.min * 10), Math.round(rates.max * 10)) / 10;
   }
 
   async function generateAndSave(){
@@ -131,21 +214,40 @@
     return Math.round(75 + num * 8); 
   }
 
-  function initialSkillForPotential(potential){ 
-    const maxStart=99; 
-    const minBase=Math.max(1, Math.round(potential*0.2-12)); 
-    const maxBase=Math.min(maxStart, Math.round(potential*0.7+6)); 
+  function initialSkillForPotential(potential, position, skill){ 
+    const maxStart = 99; 
+    const minBase = Math.max(1, Math.round(potential * 0.2 - 12)); 
+    const maxBase = Math.min(maxStart, Math.round(potential * 0.7 + 6)); 
     const val = randInt(minBase, maxBase);
     return Math.max(1, Math.min(99, val)); 
   }
   
   function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
 
-  function computeHiddenRange(potential, age, ovr){ 
-    const ageFactor = Math.max(0, age-11); 
-    const spread = Math.max(6, 18-ageFactor*1.5); 
-    let low = Math.max(1, potential - Math.round(spread + ageFactor)); 
-    let high = Math.min(99, potential + Math.round(Math.max(0, 5-ageFactor))); 
+  function calculatePositionalOVR(skills, position) {
+    const weights = POSITION_WEIGHTS[position];
+    if (!weights) return 50;
+
+    let totalWeight = 0;
+    let weightedSum = 0;
+
+    Object.keys(weights).forEach(skill => {
+      if (skills[skill] !== undefined) {
+        const weight = weights[skill];
+        weightedSum += skills[skill] * weight;
+        totalWeight += weight;
+      }
+    });
+
+    if (totalWeight === 0) return 50;
+    return Math.min(99, Math.round(weightedSum / totalWeight));
+  }
+
+  function computeHiddenRange(realPotential, age, ovr){ 
+    const ageFactor = Math.max(0, age - 11); 
+    const spread = Math.max(6, 18 - ageFactor * 1.5); 
+    let low = Math.max(1, realPotential - Math.round(spread + ageFactor)); 
+    let high = Math.min(99, realPotential + Math.round(Math.max(0, 5 - ageFactor))); 
     return {low, high}; 
   }
 
@@ -180,8 +282,9 @@
         <td><div class="player-row"><img class="avatar small" src="${avatarUrl(p)}" alt="avatar" style="border-radius:8px;width:40px;height:40px;object-fit:cover"/><div><span class="link" onclick="window.showPlayerDetail('${p.id}')">${p.name}</span></div></div></td>
         <td>${p.age}</td>
         <td><img class="flag" src="${p.countryFlag}" alt="${p.countryName}"/> ${p.countryName}</td>
+        <td><strong>${p.position}</strong></td>
         <td>${p.ovr}</td>
-        <td>${p.potential}</td>
+        <td>${computeHiddenRange(p.realPotential, p.age, p.ovr).low}–${computeHiddenRange(p.realPotential, p.age, p.ovr).high}</td>
         <td>${p.skills['Odbiór'] || '-'}</td>
         <td>${p.skills['Krycie'] || '-'}</td>
         <td>${p.skills['Podanie'] || '-'}</td>
@@ -193,7 +296,7 @@
         <td>${p.skills['Siła'] || '-'}</td>
         <td>${p.skills['Przyspieszenie'] || '-'}</td>
         <td>${p.skills['Kondycja'] || '-'}</td>
-        <td><button class="btn" onclick="window.deletePlayerConfirm('${p.id}', '${p.name.replace(/'/g, "\\'")}')" style="background:#ff4d4f;color:white;border:0">🗑️ Usuń</button></td>
+        <td><button class="btn" onclick="window.deletePlayerConfirm('${p.id}', '${p.name.replace(/'/g, "\\'")}')" style="background:#ff4d4f;color:white;border:0">✕</button></td>
       `;
       $table.appendChild(tr);
     });
@@ -206,8 +309,6 @@
     renderList(); 
   }
 
-  function displayHidden(p){ const h = computeHiddenRange(p.potential,p.age,p.ovr); return h.low+'–'+h.high; }
-
   function showPlayer(id){ 
     const p = players.find(x=>x.id===id); 
     if(!p) {
@@ -218,22 +319,31 @@
     showTab('player-view'); 
     el('pv-name').textContent = p.name; 
     el('pv-age').textContent = p.age; 
-    el('pv-potential').textContent = p.potential;
+    el('pv-position').textContent = POSITION_NAMES[p.position] + ' (' + p.position + ')';
+    const hidden = computeHiddenRange(p.realPotential, p.age, p.ovr);
+    el('pv-potential').textContent = hidden.low + '–' + hidden.high + ' (ukryty potencjał)';
     el('pv-country').innerHTML = `<img class="flag" src="${p.countryFlag}" alt="${p.countryName}"/> ${p.countryName}`;
     el('pv-avatar-img').src = avatarUrl(p);
     el('pv-ovr').textContent = p.ovr;
+    el('pv-growth').textContent = (p.growth || 0.5).toFixed(1) + '/10';
     const grid = el('pv-skills-grid'); 
     if(!grid) {
       console.error('Skills grid not found');
       return;
     }
     grid.innerHTML='';
-    const offensive = ['Strzały','Drybling','Główki','Podanie','Wizja'];
-    const defensive = ['Odbiór','Krycie'];
-    const physical = ['Siła','Przyspieszenie','Szybkość','Kondycja'];
-    grid.appendChild(renderSkillsColumn('Ofensywne', offensive, p));
-    grid.appendChild(renderSkillsColumn('Defensywne', defensive, p));
-    grid.appendChild(renderSkillsColumn('Fizyczne', physical, p));
+    
+    // Render skills organized by position type
+    const skillsList = SKILLS_BY_POSITION[p.position];
+    const topTier = skillsList.slice(0, 2);
+    const secondTier = skillsList.slice(2, 5);
+    const thirdTier = skillsList.slice(5, 8);
+    const lowerTier = skillsList.slice(8);
+
+    if (topTier.length > 0) grid.appendChild(renderSkillsColumn('★★★ Top Tier', topTier, p));
+    if (secondTier.length > 0) grid.appendChild(renderSkillsColumn('★★ Ważne', secondTier, p));
+    if (thirdTier.length > 0) grid.appendChild(renderSkillsColumn('★ Przydatne', thirdTier, p));
+    if (lowerTier.length > 0) grid.appendChild(renderSkillsColumn('Pozostałe', lowerTier, p));
   }
 
   function renderSkillsColumn(title, keys, p){ 
@@ -279,8 +389,9 @@
     if(k==='name') return p.name; 
     if(k==='age') return p.age; 
     if(k==='country') return p.countryName; 
+    if(k==='position') return p.position;
     if(k==='ovr') return p.ovr; 
-    if(k==='potential') return p.potential;
+    if(k==='potential') return p.realPotential;
     return p.skills[k] || 0; 
   }
 
