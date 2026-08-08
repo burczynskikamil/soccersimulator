@@ -47,33 +47,19 @@
     }
   };
 
-  // Tier probabilities for field players
-  const TIER_PROBABILITIES = {
-    'ST': [
-      { tier: 'tier1', prob: 0.40 },
-      { tier: 'tier2', prob: 0.25 },
-      { tier: 'tier3', prob: 0.20 },
-      { tier: 'tier4', prob: 0.10 },
-      { tier: 'tier5', prob: 0.05 }
-    ],
-    'CM': [
-      { tier: 'tier1', prob: 0.40 },
-      { tier: 'tier2', prob: 0.25 },
-      { tier: 'tier3', prob: 0.20 },
-      { tier: 'tier4', prob: 0.10 },
-      { tier: 'tier5', prob: 0.05 }
-    ],
-    'CB': [
-      { tier: 'tier1', prob: 0.40 },
-      { tier: 'tier2', prob: 0.25 },
-      { tier: 'tier3', prob: 0.20 },
-      { tier: 'tier4', prob: 0.10 },
-      { tier: 'tier5', prob: 0.05 }
-    ],
-    'GK': [
-      { tier: 'tier1', prob: 1.0 }
-    ]
-  };
+  // Tier probabilities for field players (5 tiers)
+  const TIER_PROBABILITIES_5 = [
+    { tier: 'tier1', prob: 0.25 },
+    { tier: 'tier2', prob: 0.23 },
+    { tier: 'tier3', prob: 0.20 },
+    { tier: 'tier4', prob: 0.17 },
+    { tier: 'tier5', prob: 0.15 }
+  ];
+
+  // Tier probabilities for GK (1 tier)
+  const TIER_PROBABILITIES_GK = [
+    { tier: 'tier1', prob: 1.0 }
+  ];
 
   // Height generation weights by position (cm ranges)
   const HEIGHT_RANGES = {
@@ -195,7 +181,7 @@
   }
 
   function getTierByProbability(position) {
-    const probs = TIER_PROBABILITIES[position];
+    const probs = position === 'GK' ? TIER_PROBABILITIES_GK : TIER_PROBABILITIES_5;
     const rand = Math.random();
     let cumulative = 0;
 
