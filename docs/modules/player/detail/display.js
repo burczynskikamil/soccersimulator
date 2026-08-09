@@ -15,5 +15,5 @@ window.showPlayerDetail = (id) => {
   el('pv-growth').textContent = player.growth.toFixed(2) + '/1.0';
   
   window.renderPlayerDetailTeamAssignment(id);
-  window.renderPlayerDetailSkills(id);
+  window.renderPlayerSkills(player);
 };
