@@ -3,6 +3,7 @@ const SUPABASE_URL = 'https://yalonumbdvecrxnxtumj.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_s8l_Fpx_M1gKapcXjqYnsg_nyssQYpW';
 
 let supabaseClient = null;
+let localPlayersCache = []; // Cache to preserve players during saves
 
 async function initSupabase() {
   const { createClient } = window.supabase;
@@ -50,6 +51,9 @@ async function savePlayers(players) {
   if (!supabaseClient) await initSupabase();
   
   try {
+    // Update local cache
+    localPlayersCache = players;
+    
     // Delete all existing players
     await supabaseClient.from('players').delete().neq('id', '');
     
