@@ -1,82 +1,129 @@
 // modules/player/generation/helpers.js
-window.generateHeight = (position) => {
-  const range = HEIGHT_RANGES[position];
-  const avg = range.avg;
-  let u1 = Math.random();
-  let u2 = Math.random();
-  let z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-  let height = Math.round(avg + z * 3);
-  return Math.max(range.min, Math.min(range.max, height));
+
+// ===== SKILL MODEL (single source of truth) =====
+window.FIELD_SKILLS = [
+  'shots',        // strzały
+  'headers',      // główki
+  'tackling',     // odbiór
+  'marking',      // krycie
+  'speed',        // szybkość
+  'dribbling',    // drybling
+  'acceleration', // przyspieszenie
+  'strength',     // siła
+  'vision',       // wizja
+  'passing',      // podanie
+  'stamina'       // kondycja
+];
+
+window.GK_SKILLS = [
+  'oneOnOne',     // sam na sam
+  'shotStopping', // obrona strzałów
+  'handling'      // łapanie
+];
+
+// Etykiety PL do UI
+window.SKILL_LABELS_PL = {
+  shots: 'Strzały',
+  headers: 'Główki',
+  tackling: 'Odbiór',
+  marking: 'Krycie',
+  speed: 'Szybkość',
+  dribbling: 'Drybling',
+  acceleration: 'Przyspieszenie',
+  strength: 'Siła',
+  vision: 'Wizja',
+  passing: 'Podanie',
+  stamina: 'Kondycja',
+  oneOnOne: 'Sam na sam',
+  shotStopping: 'Obrona strzałów',
+  handling: 'Łapanie'
 };
 
-window.generatePotential = () => {
-  const rand = Math.random();
-  if (rand < 0.40) {
-    return randInt(30, 50);
-  } else if (rand < 0.85) {
-    return randInt(51, 80);
-  } else {
-    return randInt(81, 99);
-  }
-};
+// ===== GENERATION HELPERS =====
+window.clampSkill = (v) => Math.max(1, Math.min(99, Math.round(v)));
 
-window.generateOVR = (hiddenPotentialMin) => {
-  const maxOVR = Math.min(60, hiddenPotentialMin);
-  return randInt(20, maxOVR);
-};
+window.randFloat = (min, max) => Math.random() * (max - min) + min;
 
-window.generateHiddenPotentialRange = (realPotential) => {
-  const variance = randInt(3, 7);
-  return {
-    min: Math.max(30, realPotential - variance),
-    max: Math.min(99, realPotential + variance)
+// Lekko zależne od pozycji (różnice ~1-2 pp)
+window.getPositionSkillOffsets = (position) => {
+  // dodatnie => ciut większa szansa / wyższy wynik, ujemne => ciut niższa
+  // bardzo subtelne różnice (ok. 1-2)
+  const base = {
+    shots: 0,
+    headers: 0,
+    tackling: 0,
+    marking: 0,
+    speed: 0,
+    dribbling: 0,
+    acceleration: 0,
+    strength: 0,
+    vision: 0,
+    passing: 0,
+    stamina: 0
   };
-};
 
-window.generateSkills = (ovr, position) => {
-  const cats = SKILL_CATEGORIES[position];
-  const imp = CATEGORY_IMPORTANCE[position];
-  let skills = {};
-  
-  for (let cat in cats) {
-    const skillList = cats[cat];
-    const importance = imp[cat];
-    
-    skillList.forEach(skill => {
-      const baseSkill = Math.round(ovr * importance);
-      const variance = randInt(-5, 5);
-      skills[skill] = Math.max(1, Math.min(99, baseSkill + variance));
-    });
+  if (position === 'ST') {
+    return {
+      ...base,
+      shots: 2, headers: 1, dribbling: 2, acceleration: 2, speed: 1,
+      passing: -1, vision: -1, tackling: -2, marking: -2
+    };
   }
-  
-  return skills;
-};
 
-window.generateGrowth = (position) => {
-  const baseGrowth = {
-    'ST': 0.75,
-    'CM': 0.70,
-    'CB': 0.65,
-    'GK': 0.60
-  };
-  const variance = Math.random() * 0.15 - 0.075;
-  return baseGrowth[position] + variance;
-};
-
-window.calculatePlayerValue = (potential, skills) => {
-  const skillValue = Object.values(skills).reduce((a, b) => a + b, 0);
-  const avgSkill = Math.round(skillValue / Object.keys(skills).length);
-  return Math.round((potential + avgSkill) * 50000);
-};
-
-window.generateUniqueName = (countryCode, existing) => {
-  const pool = NAME_POOL[countryCode] || NAME_POOL['PL'];
-  const existingNames = new Set(existing.map(p => p.name));
-  for(let i = 0; i < 500; i++){
-    const fname = pool.first[Math.floor(Math.random() * pool.first.length)];
-    const lname = pool.last[Math.floor(Math.random() * pool.last.length)];
-    const full = fname + ' ' + lname;
-    if(!existingNames.has(full)) return full;
+  if (position === 'CM') {
+    return {
+      ...base,
+      passing: 2, vision: 2, stamina: 1, dribbling: 1,
+      shots: 0, tackling: 0, marking: 0, speed: 0, acceleration: 0, strength: 0, headers: 0
+    };
   }
-  return 'Player ' + uid();
+
+  if (position === 'CB') {
+    return {
+      ...base,
+      tackling: 2, marking: 2, strength: 1, headers: 1,
+      shots: -2, dribbling: -1, acceleration: -1, vision: -1, passing: -1
+    };
+  }
+
+  return base;
+};
+
+// bazowy zakres umiejętności (możesz dopasować pod balans)
+window.getSkillBaseRange = (ovr = 60) => {
+  const min = Math.max(30, ovr - 14);
+  const max = Math.min(90, ovr + 14);
+  return { min, max };
+};
+
+// generuje komplet skilli zależnie od pozycji
+window.generateSkillsByPosition = (position, ovr = 60) => {
+  // GK ma tylko 3 skille
+  if (position === 'GK') {
+    const { min, max } = getSkillBaseRange(ovr);
+    return {
+      oneOnOne: clampSkill(randFloat(min, max)),
+      shotStopping: clampSkill(randFloat(min, max)),
+      handling: clampSkill(randFloat(min, max))
+    };
+  }
+
+  // Zawodnicy z pola: pełny zestaw 11 skilli
+  const { min, max } = getSkillBaseRange(ovr);
+  const offsets = getPositionSkillOffsets(position);
+
+  const out = {};
+  FIELD_SKILLS.forEach((k) => {
+    const raw = randFloat(min, max) + (offsets[k] || 0);
+    out[k] = clampSkill(raw);
+  });
+
+  return out;
+};
+
+// OVR z nowych skilli (prosty średni model)
+window.computeOvrFromSkills = (position, skills) => {
+  const keys = position === 'GK' ? GK_SKILLS : FIELD_SKILLS;
+  const sum = keys.reduce((acc, k) => acc + (Number(skills[k]) || 0), 0);
+  return clampSkill(sum / keys.length);
 };
