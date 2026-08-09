@@ -16,7 +16,9 @@ window.renderPlayersList = () => {
   sorted.forEach(p => {
     const colors = POSITION_COLORS[p.position];
     const teamName = p.teamId ? teams.find(t => t.id === p.teamId)?.name : '-';
-    const displayValue = getDisplayValue(p.value, p.position);
+    const displayValue = (typeof window.getDisplayValue === 'function')
+      ? window.getDisplayValue(p.value, p.position)
+      : p.value;
     
     const tr = document.createElement('tr');
     tr.innerHTML = `
