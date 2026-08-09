@@ -240,8 +240,51 @@
     <footer class="footer">SoccerSimulator — League Manager • Dane w Supabase</footer>
   </div>
 
-  <!-- Load database module first, then module loader -->
+  <!-- ============ MODULE LOADING ORDER ============ -->
+  <!-- 1. Database module first -->
   <script src="db.js"></script>
+  
+  <!-- 2. Constants -->
+  <script src="modules/constants/positions.js"></script>
+  <script src="modules/constants/countries.js"></script>
+  <script src="modules/constants/skills.js"></script>
+  <script src="modules/constants/height-ranges.js"></script>
+  
+  <!-- 3. State management -->
+  <script src="modules/player/state.js"></script>
+  <script src="modules/team/state.js"></script>
+  
+  <!-- 4. Utilities -->
+  <script src="modules/utils/dom.js"></script>
+  <script src="modules/utils/formatting.js"></script>
+  <script src="modules/utils/sorting.js"></script>
+  <script src="modules/utils/file-handling.js"></script>
+  
+  <!-- 5. Player modules -->
+  <script src="modules/player/generation/generator.js"></script>
+  <script src="modules/player/list/filters.js"></script>
+  <script src="modules/player/list/renderer.js"></script>
+  <script src="modules/player/detail/display.js"></script>
+  <script src="modules/player/detail/team-assignment.js"></script>
+  <script src="modules/player/detail/skills.js"></script>
+  <script src="modules/player/list/actions.js"></script>
+  
+  <!-- 6. Team modules -->
+  <script src="modules/team/list/renderer.js"></script>
+  <script src="modules/team/list/actions.js"></script>
+  <script src="modules/team/create/form.js"></script>
+  <script src="modules/team/detail/display.js"></script>
+  <script src="modules/team/detail/players-table.js"></script>
+  <script src="modules/team/detail/budget-editor.js"></script>
+  
+  <!-- 7. UI modules -->
+  <script src="modules/ui/navigation.js"></script>
+  <script src="modules/ui/tabs.js"></script>
+  
+  <!-- 8. Stats module -->
+  <script src="modules/stats.js"></script>
+  
+  <!-- 9. Main application (must be last) -->
   <script src="app.js"></script>
 </body>
 </html>
