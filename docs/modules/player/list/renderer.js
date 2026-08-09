@@ -30,8 +30,14 @@ window.renderPlayersList = () => {
       <td>${p.hiddenPotentialMin}–${p.hiddenPotentialMax}</td>
       <td>${formatCurrency(displayValue)}</td>
       <td>${teamName}</td>
-      <td><button class="btn" onclick="window.deletePlayerConfirm('${p.id}', '${p.name.replace(/'/g, "\\'")}'" style="background:#ff4d4f;color:white;border:0">✕</button></td>
+      <td><button class="btn" style="background:#ff4d4f;color:white;border:0">✕</button></td>
     `;
+
+    const deleteBtn = tr.querySelector('button.btn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', () => window.deletePlayerConfirm(p.id, p.name));
+    }
+
     $playersTable.appendChild(tr);
   });
 };
