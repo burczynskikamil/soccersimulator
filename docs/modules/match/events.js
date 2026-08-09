@@ -50,6 +50,7 @@ window.matchEvents = (() => {
       eventType: 'pass',
       playerId: attacker.id,
       teamId: teamInAttack.id,
+      accurate: accuratePass,
       description: accuratePass
         ? `${attacker.name} zagrywa celnie do ${support.name}.`
         : `${attacker.name} notuje niedokładne podanie.`
@@ -128,13 +129,15 @@ window.matchEvents = (() => {
           teamId: teamInAttack.id,
           description: `GOOOL! ${support.name} pokonuje ${keeper.name}.`
         });
-        events.push({
-          minute,
-          eventType: 'assist',
-          playerId: attacker.id,
-          teamId: teamInAttack.id,
-          description: `Asysta: ${attacker.name}.`
-        });
+        if (attacker.id !== support.id) {
+          events.push({
+            minute,
+            eventType: 'assist',
+            playerId: attacker.id,
+            teamId: teamInAttack.id,
+            description: `Asysta: ${attacker.name}.`
+          });
+        }
         events.push({
           minute,
           eventType: 'goal_conceded',
@@ -166,24 +169,28 @@ window.matchEvents = (() => {
 
     if (Math.random() < 0.25) {
       const runner = pick(attackers);
-      events.push({
-        minute,
-        eventType: 'sprint',
-        playerId: runner.id,
-        teamId: teamInAttack.id,
-        description: `${runner.name} rusza dynamicznym sprintem.`
-      });
+      if (runner) {
+        events.push({
+          minute,
+          eventType: 'sprint',
+          playerId: runner.id,
+          teamId: teamInAttack.id,
+          description: `${runner.name} rusza dynamicznym sprintem.`
+        });
+      }
     }
 
     if (Math.random() < 0.03) {
       const injured = pick([...attackers, ...defenders]);
-      events.push({
-        minute,
-        eventType: 'injury',
-        playerId: injured.id,
-        teamId: injured.teamId,
-        description: `Kontuzja! ${injured.name} potrzebuje pomocy medycznej.`
-      });
+      if (injured) {
+        events.push({
+          minute,
+          eventType: 'injury',
+          playerId: injured.id,
+          teamId: injured.teamId,
+          description: `Kontuzja! ${injured.name} potrzebuje pomocy medycznej.`
+        });
+      }
     }
 
     return events;

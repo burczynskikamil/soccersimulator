@@ -289,6 +289,9 @@ async function saveMatchSimulation(result) {
     red_cards: stats.red_cards,
     dribbles: stats.dribbles,
     saves: stats.saves,
+    sprints: stats.sprints,
+    clearances: stats.clearances,
+    goals_conceded: stats.goals_conceded,
     rating: stats.rating
   }));
 
@@ -297,20 +300,25 @@ async function saveMatchSimulation(result) {
     if (statsError) throw statsError;
   }
 
-  await Promise.all((result.playerStats || []).map(async (stats) => {
-    const { data: currentRows } = await supabaseClient
+  const playerStatsList = result.playerStats || [];
+  const playerIds = playerStatsList.map((stats) => stats.playerId);
+  const { data: existingCareerRows } = playerIds.length
+    ? await supabaseClient
       .from('player_career_stats')
       .select('*')
-      .eq('player_id', stats.playerId)
-      .limit(1);
+      .in('player_id', playerIds)
+    : { data: [] };
 
-    const current = currentRows && currentRows[0];
+  const existingCareerByPlayerId = Object.fromEntries((existingCareerRows || []).map((row) => [row.player_id, row]));
+
+  const careerUpserts = playerStatsList.map((stats) => {
+    const current = existingCareerByPlayerId[stats.playerId];
     const matchesPlayed = Number(current?.matches_played || 0) + 1;
     const previousAverage = Number(current?.average_rating || 0);
     const previousMatches = Number(current?.matches_played || 0);
     const newAverage = ((previousAverage * previousMatches) + Number(stats.rating || 6)) / matchesPlayed;
 
-    await supabaseClient.from('player_career_stats').upsert({
+    return {
       id: current?.id || `pcs_${Math.random().toString(36).slice(2, 10)}`,
       player_id: stats.playerId,
       matches_played: matchesPlayed,
@@ -318,8 +326,15 @@ async function saveMatchSimulation(result) {
       assists: Number(current?.assists || 0) + Number(stats.assists || 0),
       average_rating: Number(newAverage.toFixed(2)),
       updated_at: nowIso
-    }, { onConflict: 'player_id' });
-  }));
+    };
+  });
+
+  if (careerUpserts.length) {
+    const { error: careerError } = await supabaseClient
+      .from('player_career_stats')
+      .upsert(careerUpserts, { onConflict: 'player_id' });
+    if (careerError) throw careerError;
+  }
 
   const teamSummaries = [
     {
@@ -336,15 +351,17 @@ async function saveMatchSimulation(result) {
     }
   ];
 
-  await Promise.all(teamSummaries.map(async (summary) => {
-    const { data: currentRows } = await supabaseClient
-      .from('team_stats')
-      .select('*')
-      .eq('team_id', summary.teamId)
-      .limit(1);
+  const teamIds = teamSummaries.map((item) => item.teamId);
+  const { data: existingTeamRows } = await supabaseClient
+    .from('team_stats')
+    .select('*')
+    .in('team_id', teamIds);
 
-    const current = currentRows && currentRows[0];
-    await supabaseClient.from('team_stats').upsert({
+  const existingTeamById = Object.fromEntries((existingTeamRows || []).map((row) => [row.team_id, row]));
+
+  const teamUpserts = teamSummaries.map((summary) => {
+    const current = existingTeamById[summary.teamId];
+    return {
       id: current?.id || `ts_${Math.random().toString(36).slice(2, 10)}`,
       team_id: summary.teamId,
       matches_played: Number(current?.matches_played || 0) + 1,
@@ -354,8 +371,13 @@ async function saveMatchSimulation(result) {
       goals_for: Number(current?.goals_for || 0) + summary.goalsFor,
       goals_against: Number(current?.goals_against || 0) + summary.goalsAgainst,
       updated_at: nowIso
-    }, { onConflict: 'team_id' });
-  }));
+    };
+  });
+
+  const { error: teamStatsError } = await supabaseClient
+    .from('team_stats')
+    .upsert(teamUpserts, { onConflict: 'team_id' });
+  if (teamStatsError) throw teamStatsError;
 }
 
 async function loadPlayerCareerStats(playerId) {
@@ -376,8 +398,7 @@ async function loadPlayerMatchHistory(playerId, limit = 5) {
     .from('player_match_stats')
     .select('match_id, goals, assists, rating, created_at')
     .eq('player_id', playerId)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+    .order('created_at', { ascending: false });
 
   if (statsError || !statRows?.length) return [];
 
@@ -406,7 +427,9 @@ async function loadPlayerMatchHistory(playerId, limit = 5) {
       assists: row.assists,
       rating: row.rating
     };
-  }).filter(Boolean);
+  }).filter(Boolean)
+    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
+    .slice(0, limit);
 }
 
 async function loadTeamStats(teamId) {
@@ -423,23 +446,14 @@ async function loadTeamStats(teamId) {
 async function loadTeamMatchHistory(teamId, limit = 5) {
   if (!supabaseClient) await initSupabase();
 
-  const { data: teamAMatches } = await supabaseClient
+  const { data: allMatches } = await supabaseClient
     .from('matches')
     .select('*')
-    .eq('team_a_id', teamId)
+    .or(`team_a_id.eq.${teamId},team_b_id.eq.${teamId}`)
     .order('finished_at', { ascending: false })
     .limit(limit);
 
-  const { data: teamBMatches } = await supabaseClient
-    .from('matches')
-    .select('*')
-    .eq('team_b_id', teamId)
-    .order('finished_at', { ascending: false })
-    .limit(limit);
-
-  const all = [...(teamAMatches || []), ...(teamBMatches || [])]
-    .sort((a, b) => new Date(b.finished_at || b.created_at) - new Date(a.finished_at || a.created_at))
-    .slice(0, limit);
+  const all = allMatches || [];
 
   return all.map((match) => {
     const isHome = match.team_a_id === teamId;

@@ -31,6 +31,7 @@ window.startFriendlyMatchSimulation = async () => {
 
   matchDisplay.resetLiveView();
 
+  const simulationStartedAt = new Date().toISOString();
   const score = { teamA: 0, teamB: 0 };
   const statsByPlayerId = matchStatistics.initStats(lineupA, lineupB);
   const events = [];
@@ -55,7 +56,7 @@ window.startFriendlyMatchSimulation = async () => {
     minuteEvents.forEach((event) => {
       events.push(event);
       if (event.eventType === 'pass') {
-        matchStatistics.registerPass(statsByPlayerId, event.playerId, !event.description.includes('niedokładne'));
+        matchStatistics.registerPass(statsByPlayerId, event.playerId, Boolean(event.accurate));
       }
       matchStatistics.registerEvent(statsByPlayerId, event);
       matchDisplay.appendLiveLog(minute, event.description);
@@ -75,7 +76,7 @@ window.startFriendlyMatchSimulation = async () => {
   const result = {
     id: `match_${Math.random().toString(36).slice(2, 10)}`,
     status: 'finished',
-    startedAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+    startedAt: simulationStartedAt,
     finishedAt: new Date().toISOString(),
     teamA,
     teamB,
@@ -84,14 +85,13 @@ window.startFriendlyMatchSimulation = async () => {
     playerStats
   };
 
+  const { dbStatus } = getDOMElements();
   try {
     await window.db.saveMatchSimulation(result);
-    const { dbStatus } = getDOMElements();
-    dbStatus.textContent = '✅ Mecz towarzyski zapisany';
+    if (dbStatus) dbStatus.textContent = '✅ Mecz towarzyski zapisany';
   } catch (error) {
     console.error('Save match error:', error);
-    const { dbStatus } = getDOMElements();
-    dbStatus.textContent = '⚠️ Mecz rozegrany, ale zapis się nie powiódł';
+    if (dbStatus) dbStatus.textContent = '⚠️ Mecz rozegrany, ale zapis się nie powiódł';
   }
 
   matchState.setCurrentMatch(result);

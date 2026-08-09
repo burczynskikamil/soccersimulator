@@ -30,9 +30,6 @@ window.matchTeamSelector = (() => {
       ? starters.reduce((sum, player) => sum + Number(player.ovr || 0), 0) / starters.length
       : 0;
 
-    starters.forEach((player) => {
-      player.teamId = teamId;
-    });
 
     return {
       id: teamId,
@@ -94,8 +91,12 @@ window.matchTeamSelector = (() => {
   }
 
   function onSelectionChange() {
-    const teamAId = el('match-team-a').value;
-    const teamBId = el('match-team-b').value;
+    const teamAEl = el('match-team-a');
+    const teamBEl = el('match-team-b');
+    if (!teamAEl || !teamBEl) return;
+
+    const teamAId = teamAEl.value;
+    const teamBId = teamBEl.value;
     matchState.setTeams(teamAId, teamBId);
 
     renderLineupPreview(teamAId, 'match-lineup-a');

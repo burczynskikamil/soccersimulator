@@ -159,6 +159,9 @@ CREATE TABLE IF NOT EXISTS player_match_stats (
   red_cards INTEGER DEFAULT 0,
   dribbles INTEGER DEFAULT 0,
   saves INTEGER DEFAULT 0,
+  sprints INTEGER DEFAULT 0,
+  clearances INTEGER DEFAULT 0,
+  goals_conceded INTEGER DEFAULT 0,
   rating DECIMAL(3,2),
   created_at TIMESTAMP DEFAULT NOW()
 );
