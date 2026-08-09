@@ -11,6 +11,7 @@ window.deleteTeam = async (teamId) => {
   dbStatus.textContent = '✅ Drużyna usunięta';
   window.showTab('teams');
   window.renderTeamsList();
+  if (window.matchTeamSelector) window.matchTeamSelector.renderSelectors();
   window.updateStats();
 };
 

@@ -18,6 +18,7 @@
         <button id="tab-dashboard" class="tab active">📊 Panel</button>
         <button id="tab-players" class="tab">👥 Zawodnicy</button>
         <button id="tab-teams" class="tab">🏆 Drużyny</button>
+        <button id="tab-match-friendly" class="tab">🤝 Mecz Towarzyski</button>
       </nav>
       <div class="top-actions">
         <span id="db-status" style="color: #94a3b8; font-size: 12px;">⏳ Ładowanie modułów...</span>
@@ -113,6 +114,51 @@
         </div>
       </section>
 
+
+      <!-- FRIENDLY MATCH VIEW -->
+      <section id="match-friendly" class="view hidden">
+        <div class="card">
+          <h2>Mecz Towarzyski (2×30 min)</h2>
+          <div class="friendly-team-selectors">
+            <div class="form-group">
+              <label>Drużyna A</label>
+              <select id="match-team-a" class="form-input"></select>
+              <div id="match-lineup-a" class="lineup-preview"></div>
+            </div>
+            <div class="form-group">
+              <label>Drużyna B</label>
+              <select id="match-team-b" class="form-input"></select>
+              <div id="match-lineup-b" class="lineup-preview"></div>
+            </div>
+          </div>
+          <button id="start-friendly-match" class="btn primary">▶ Rozpocznij mecz</button>
+        </div>
+
+        <div class="card">
+          <h3>Transmisja na żywo</h3>
+          <div class="friendly-live-meta">
+            <strong id="match-live-timer">0'</strong>
+            <strong id="match-live-score">0 : 0</strong>
+          </div>
+          <div id="match-live-log" class="match-live-log"></div>
+        </div>
+
+        <div id="match-results" class="card hidden">
+          <h3>Wynik końcowy</h3>
+          <h2 id="match-result-title">-</h2>
+          <div class="table-wrap">
+            <table id="match-player-stats-table">
+              <thead>
+                <tr>
+                  <th>Zawodnik</th><th>Min</th><th>G</th><th>A</th><th>Celne podania</th><th>Dryblingi</th><th>Odbiory</th><th>Przechwyty</th><th>Faule</th><th>K</th><th>Interw.</th><th>Pędy</th><th>Wybicia</th><th>Stracone</th><th>Ocena</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <!-- TEAM CREATE -->
       <section id="team-create" class="view hidden">
         <div class="card">
@@ -181,6 +227,10 @@
             <button onclick="window.updateTeamBudget()" class="btn primary">Zapisz Zmiany</button>
           </div>
 
+          <h3 style="margin-top: 30px;">Historia Meczów</h3>
+          <div id="team-career-stats" class="career-stats-grid"></div>
+          <div id="team-match-history" class="match-history-list"></div>
+
           <h3 style="margin-top: 30px;">Zawodnicy w Drużynie</h3>
           <div class="table-wrap">
             <table id="team-players-table">
@@ -231,6 +281,10 @@
           <div class="player-body skills-grid" id="pv-skills-grid">
             <!-- skills columns will be rendered here -->
           </div>
+
+          <h3 style="margin-top: 30px;">Historia Meczów</h3>
+          <div id="pv-career-stats" class="career-stats-grid"></div>
+          <div id="pv-match-history" class="match-history-list"></div>
         </div>
       </section>
 
@@ -282,14 +336,23 @@
   <script src="modules/team/detail/players-table.js"></script>
   <script src="modules/team/detail/budget-editor.js"></script>
   
-  <!-- 7. UI modules -->
+  <!-- 7. Match modules -->
+  <script src="modules/match/state.js"></script>
+  <script src="modules/match/rating.js"></script>
+  <script src="modules/match/statistics.js"></script>
+  <script src="modules/match/events.js"></script>
+  <script src="modules/match/display.js"></script>
+  <script src="modules/match/team-selector.js"></script>
+  <script src="modules/match/engine.js"></script>
+
+  <!-- 8. UI modules -->
   <script src="modules/ui/tabs.js"></script>
   <script src="modules/ui/init.js"></script>
   
-  <!-- 8. Stats module -->
+  <!-- 9. Stats module -->
   <script src="modules/stats.js"></script>
   
-  <!-- 9. Main application (must be last) -->
+  <!-- 10. Main application (must be last) -->
   <script src="app.js"></script>
 </body>
 </html>

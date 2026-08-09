@@ -79,6 +79,14 @@
       renderTeamsList();
     });
 
+    const matchTab = el('tab-match-friendly');
+    if (matchTab) {
+      matchTab.addEventListener('click', () => {
+        showTab('match-friendly');
+        if (window.matchTeamSelector) window.matchTeamSelector.init();
+      });
+    }
+
     // Generate player buttons
     document.querySelectorAll('#generate-player').forEach(btn => {
       btn.addEventListener('click', generateNewPlayer);
@@ -102,6 +110,7 @@
     // Initial render
     window.renderPlayersList();
     window.renderTeamsList();
+    if (window.matchTeamSelector) window.matchTeamSelector.init();
     window.updateStats();
   }
 
@@ -155,6 +164,7 @@
     el('team-logo').value = '';
     showTab('teams');
     renderTeamsList();
+    if (window.matchTeamSelector) window.matchTeamSelector.renderSelectors();
     updateStats();
   }
 

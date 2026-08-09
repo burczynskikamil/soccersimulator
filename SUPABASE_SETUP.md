@@ -114,3 +114,79 @@ players
 ---
 
 **✅ Setup gotowy! Aplikacja automatycznie się połączy z bazą danych.**
+
+## 🆕 SQL dla systemu meczów towarzyskich
+
+Uruchom dodatkowo poniższy SQL w Supabase SQL Editor:
+
+```sql
+CREATE TABLE IF NOT EXISTS matches (
+  id TEXT PRIMARY KEY,
+  team_a_id TEXT NOT NULL,
+  team_b_id TEXT NOT NULL,
+  team_a_score INTEGER DEFAULT 0,
+  team_b_score INTEGER DEFAULT 0,
+  status TEXT DEFAULT 'finished',
+  started_at TIMESTAMP,
+  finished_at TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS match_events (
+  id TEXT PRIMARY KEY,
+  match_id TEXT NOT NULL REFERENCES matches(id),
+  minute INTEGER,
+  player_id TEXT,
+  team_id TEXT,
+  event_type TEXT,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS player_match_stats (
+  id TEXT PRIMARY KEY,
+  match_id TEXT NOT NULL REFERENCES matches(id),
+  player_id TEXT NOT NULL,
+  minutes_played INTEGER,
+  goals INTEGER DEFAULT 0,
+  assists INTEGER DEFAULT 0,
+  passes_total INTEGER DEFAULT 0,
+  passes_accurate INTEGER DEFAULT 0,
+  tackles INTEGER DEFAULT 0,
+  interceptions INTEGER DEFAULT 0,
+  fouls INTEGER DEFAULT 0,
+  yellow_cards INTEGER DEFAULT 0,
+  red_cards INTEGER DEFAULT 0,
+  dribbles INTEGER DEFAULT 0,
+  saves INTEGER DEFAULT 0,
+  sprints INTEGER DEFAULT 0,
+  clearances INTEGER DEFAULT 0,
+  goals_conceded INTEGER DEFAULT 0,
+  rating DECIMAL(3,2),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS player_career_stats (
+  id TEXT PRIMARY KEY,
+  player_id TEXT NOT NULL UNIQUE REFERENCES players(id),
+  matches_played INTEGER DEFAULT 0,
+  goals INTEGER DEFAULT 0,
+  assists INTEGER DEFAULT 0,
+  average_rating DECIMAL(3,2),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS team_stats (
+  id TEXT PRIMARY KEY,
+  team_id TEXT NOT NULL UNIQUE REFERENCES teams(id),
+  matches_played INTEGER DEFAULT 0,
+  wins INTEGER DEFAULT 0,
+  draws INTEGER DEFAULT 0,
+  losses INTEGER DEFAULT 0,
+  goals_for INTEGER DEFAULT 0,
+  goals_against INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
