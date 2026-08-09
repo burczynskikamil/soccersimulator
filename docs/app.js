@@ -25,9 +25,9 @@
 
   const POSITION_COLORS = {
     'ST': { bg: '#ff4d4f', text: '#fff' },
-    'CM': { bg: '#1890ff', text: '#fff' },
-    'CB': { bg: '#52c41a', text: '#fff' },
-    'GK': { bg: '#faad14', text: '#000' }
+    'CM': { bg: '#52c41a', text: '#fff' },
+    'CB': { bg: '#faad14', text: '#000' },
+    'GK': { bg: '#1890ff', text: '#fff' }
   };
 
   const SKILL_CATEGORIES = {
@@ -223,15 +223,23 @@
   }
 
   function generatePotential() {
-    let u1 = Math.random();
-    let u2 = Math.random();
-    let z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
-    let potential = Math.round(65 + z * 8);
-    return Math.max(30, Math.min(99, potential));
+    const rand = Math.random();
+    if (rand < 0.40) {
+      return randInt(30, 50);
+    } else if (rand < 0.95) {
+      return randInt(51, 80);
+    } else {
+      return randInt(81, 99);
+    }
   }
 
   function generateOVR(potential) {
-    return Math.max(30, potential - randInt(5, 15));
+    const ratio = potential / 99;
+    const minOVR = 20;
+    const maxOVR = 60;
+    const baseOVR = Math.round(minOVR + ratio * (maxOVR - minOVR));
+    const variance = randInt(-3, 3);
+    return Math.max(minOVR, Math.min(maxOVR, baseOVR + variance));
   }
 
   function generateHiddenPotentialRange(realPotential) {

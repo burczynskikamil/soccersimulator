@@ -148,26 +148,39 @@ async function saveTeams(teams) {
   if (!supabaseClient) await initSupabase();
   
   try {
-    // Delete all existing teams
-    await supabaseClient.from('teams').delete().neq('id', '');
-    
-    // Insert new teams
-    const { error } = await supabaseClient
-      .from('teams')
-      .insert(
-        teams.map(t => ({
-          id: t.id,
-          name: t.name,
-          country: t.country,
-          country_name: t.countryName,
-          country_flag: t.countryFlag,
-          logo: t.logo || null,
-          budget: t.budget || 1000000,
-          created_at: new Date(t.created).toISOString()
-        }))
-      );
-    
-    if (error) throw error;
+    // Upsert teams to avoid cascade issues with player team_id assignments
+    if (teams.length > 0) {
+      const { error } = await supabaseClient
+        .from('teams')
+        .upsert(
+          teams.map(t => ({
+            id: t.id,
+            name: t.name,
+            country: t.country,
+            country_name: t.countryName,
+            country_flag: t.countryFlag,
+            logo: t.logo || null,
+            budget: t.budget || 1000000,
+            created_at: new Date(t.created).toISOString()
+          })),
+          { onConflict: 'id' }
+        );
+      
+      if (error) throw error;
+    }
+
+    // Remove teams that are no longer in the list
+    const ids = teams.map(t => t.id);
+    if (ids.length > 0) {
+      const { error: delError } = await supabaseClient
+        .from('teams')
+        .delete()
+        .not('id', 'in', `(${ids.map(id => `'${id}'`).join(',')})`);
+      if (delError) console.warn('Teams cleanup warning:', delError);
+    } else {
+      await supabaseClient.from('teams').delete().neq('id', '');
+    }
+
     console.log('💾 Teams saved to database');
   } catch (err) {
     console.error('Save teams error:', err);
