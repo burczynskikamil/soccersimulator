@@ -5,7 +5,9 @@ window.matchState = (() => {
     selectedTeamBId: '',
     lineups: {},
     currentMatch: null,
-    isSimulating: false
+    isSimulating: false,
+    simulationMode: 'fast',
+    activeSimulation: null
   };
 
   return {
@@ -25,12 +27,20 @@ window.matchState = (() => {
     setCurrentMatch: (match) => {
       state.currentMatch = match;
     },
+    getCurrentMatch: () => state.currentMatch,
     setSimulating: (value) => {
       state.isSimulating = Boolean(value);
+    },
+    setSimulationMode: (mode) => {
+      state.simulationMode = mode === 'slow' ? 'slow' : 'fast';
+    },
+    setActiveSimulation: (simulation) => {
+      state.activeSimulation = simulation || null;
     },
     resetCurrent: () => {
       state.currentMatch = null;
       state.isSimulating = false;
+      state.activeSimulation = null;
     }
   };
 })();

@@ -1,28 +1,78 @@
 // modules/match/display.js
 window.matchDisplay = (() => {
+  function formatMatchClock(totalSeconds) {
+    const minutes = Math.floor((Number(totalSeconds) || 0) / 60);
+    const seconds = Math.max(0, Number(totalSeconds) || 0) % 60;
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  function formatChance(value) {
+    return `${Math.round(Number(value || 0) * 100)}%`;
+  }
+
+  function formatModifier(modifier) {
+    const sign = Number(modifier.value) >= 0 ? '+' : '−';
+    return `${modifier.label} ${sign}${formatChance(Math.abs(Number(modifier.value) || 0))}`;
+  }
+
+  function buildProbabilityText(probabilityDetails) {
+    if (!probabilityDetails) return '';
+    const modifiers = (probabilityDetails.modifiers || []).map(formatModifier);
+    const summary = [
+      `${probabilityDetails.label || 'Szansa'} ${formatChance(probabilityDetails.final)}`,
+      `(bazowe ${formatChance(probabilityDetails.base)}`,
+      modifiers.length ? `; ${modifiers.join(', ')}` : '',
+      ')'
+    ].join('');
+    return `Szansa: ${summary}`;
+  }
+
   function resetLiveView() {
     const log = el('match-live-log');
     const timer = el('match-live-timer');
     const score = el('match-live-score');
+    const resultCard = el('match-results');
     if (log) log.innerHTML = '';
-    if (timer) timer.textContent = '0\'';
+    if (timer) timer.textContent = formatMatchClock(0);
     if (score) score.textContent = '0 : 0';
+    if (resultCard) resultCard.classList.add('hidden');
   }
 
-  function appendLiveLog(minute, text) {
+  function appendLiveLog(second, text, probabilityDetails) {
     const log = el('match-live-log');
     if (!log) return;
 
     const row = document.createElement('div');
     row.className = 'match-log-row';
-    row.innerHTML = `<span class="minute">${minute}'</span><span>${text}</span>`;
+
+    const minute = document.createElement('span');
+    minute.className = 'minute';
+    minute.textContent = formatMatchClock(second);
+
+    const content = document.createElement('div');
+    content.className = 'match-log-content';
+
+    const description = document.createElement('div');
+    description.className = 'match-log-description';
+    description.textContent = text;
+    content.appendChild(description);
+
+    if (probabilityDetails) {
+      const probability = document.createElement('div');
+      probability.className = 'match-log-probability';
+      probability.textContent = buildProbabilityText(probabilityDetails);
+      content.appendChild(probability);
+    }
+
+    row.appendChild(minute);
+    row.appendChild(content);
     log.appendChild(row);
     log.scrollTop = log.scrollHeight;
   }
 
-  function updateTimer(minute) {
+  function updateTimer(totalSeconds) {
     const timer = el('match-live-timer');
-    if (timer) timer.textContent = `${minute}'`;
+    if (timer) timer.textContent = formatMatchClock(totalSeconds);
   }
 
   function updateScore(scoreA, scoreB) {
@@ -69,6 +119,7 @@ window.matchDisplay = (() => {
   return {
     resetLiveView,
     appendLiveLog,
+    formatMatchClock,
     updateTimer,
     updateScore,
     renderResults
