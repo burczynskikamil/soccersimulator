@@ -46,7 +46,10 @@ window.generatePlayer = () => {
     : ['GK','CB','CM','ST'];
 
   const position = _sample(_positions);
-  const age = _randInt(16, 37);
+
+  // ✅ WYMAGANIE: wszyscy mają 11 lat
+  const age = 11;
+
   const country = _sample(_countries);
 
   // Potencjał: 30..99, najczęściej okolice 60
@@ -61,7 +64,10 @@ window.generatePlayer = () => {
 
   return {
     id: 'player_' + Math.random().toString(36).slice(2, 10),
+
+    // ✅ zawsze przez funkcję narodowości
     name: _nameFn(country.code),
+
     age,
     position,
     country: country.code,
