@@ -34,9 +34,27 @@
   window.sample = (x) => x[Math.floor(Math.random() * x.length)];
   window.randInt = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
   
+  function setupTabNavigation() {
+    el('tab-dashboard').addEventListener('click', () => showTab('dashboard'));
+    el('tab-players').addEventListener('click', () => showTab('players'));
+    el('tab-teams').addEventListener('click', () => {
+      showTab('teams');
+      renderTeamsList();
+    });
+
+    const matchTab = el('tab-match-friendly');
+    if (matchTab) {
+      matchTab.addEventListener('click', () => {
+        showTab('match-friendly');
+        if (window.matchTeamSelector) window.matchTeamSelector.init();
+      });
+    }
+  }
+  
   // ============ INITIALIZATION ============
   async function init() {
     const { dbStatus } = getDOMElements();
+    setupTabNavigation();
     
     try {
       dbStatus.textContent = '⏳ Ładowanie modułów...';
@@ -70,22 +88,6 @@
       opt.textContent = c.name;
       teamCountrySelect.appendChild(opt);
     });
-
-    // Tab navigation
-    el('tab-dashboard').addEventListener('click', () => showTab('dashboard'));
-    el('tab-players').addEventListener('click', () => showTab('players'));
-    el('tab-teams').addEventListener('click', () => {
-      showTab('teams');
-      renderTeamsList();
-    });
-
-    const matchTab = el('tab-match-friendly');
-    if (matchTab) {
-      matchTab.addEventListener('click', () => {
-        showTab('match-friendly');
-        if (window.matchTeamSelector) window.matchTeamSelector.init();
-      });
-    }
 
     // Generate player buttons
     document.querySelectorAll('#generate-player').forEach(btn => {
