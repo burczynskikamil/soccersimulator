@@ -58,8 +58,8 @@ window.generatePlayer = () => {
   // OVR: max 60, skorelowany z potencjałem, ale losowy
   const ovr = generateOvrFromPotential(realPotential);
 
-  const hiddenPotentialMin = _clampSkill(realPotential - _randInt(0, 5));
-  const hiddenPotentialMax = _clampSkill(realPotential + _randInt(0, 5));
+  const hiddenPotentialMin = _clampSkill(realPotential - _randInt(0, 15));
+  const hiddenPotentialMax = _clampSkill(realPotential + _randInt(0, 15));
   const skills = _generateSkillsByPosition(position, ovr);
 
   return {
