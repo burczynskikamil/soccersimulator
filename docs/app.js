@@ -41,7 +41,6 @@
     try {
       dbStatus.textContent = '⏳ Ładowanie modułów...';
       
-      // Load all modules from localStorage or Supabase
       await window.db.initSupabase();
       
       const loadedPlayers = await window.db.loadPlayers();
@@ -57,7 +56,6 @@
       dbStatus.textContent = '⚠️ Błąd bazy danych';
     }
 
-    // Setup countries
     COUNTRIES.forEach(c => {
       const opt = document.createElement('option');
       opt.value = c.code;
@@ -93,9 +91,9 @@
     el('back-to-teams-detail').addEventListener('click', () => showTab('teams'));
     el('team-form-submit').addEventListener('click', createNewTeam);
 
-    // Table sorting
+    // Table sorting (global sorter.js)
     document.querySelectorAll('#players-table thead th[data-sort]').forEach(th => {
-      th.addEventListener('click', () => sortPlayersByColumn(th.dataset.sort));
+      th.addEventListener('click', () => window.sortPlayersByColumn(th.dataset.sort));
     });
 
     el('filter-country').addEventListener('change', renderPlayersList);
@@ -150,7 +148,7 @@
 
     teamState.add(team);
     await window.db.saveTeams(teamState.getAll());
-    await window.db.savePlayers(playerState.getAll());  // Preserve all players
+    await window.db.savePlayers(playerState.getAll());
     const { dbStatus } = getDOMElements();
     dbStatus.textContent = '✅ Drużyna utworzona';
     el('team-name').value = '';
@@ -160,32 +158,10 @@
     updateStats();
   }
 
-  // ============ SORTING & FILTERING ============
-  let playerSortState = { k: 'name', dir: 1 };
-
-  function sortPlayersByColumn(k) {
-    if(playerSortState.k === k) playerSortState.dir *= -1;
-    else { playerSortState.k = k; playerSortState.dir = 1; }
-    renderPlayersList();
-  }
-
-  function getSortValue(p, k) {
-    if(k === 'name') return p.name;
-    if(k === 'age') return p.age;
-    if(k === 'country') return p.countryName;
-    if(k === 'position') return p.position;
-    if(k === 'ovr') return p.ovr;
-    if(k === 'potential') return p.realPotential;
-    if(k === 'value') return p.value || 0;
-    return p.skills[k] || 0;
-  }
-
   // ============ EXPORT GLOBAL FUNCTIONS ============
   window.generateNewPlayer = generateNewPlayer;
   window.createNewTeam = createNewTeam;
-  window.sortPlayersByColumn = sortPlayersByColumn;
 
-  // Initialize when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
