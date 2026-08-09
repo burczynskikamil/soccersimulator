@@ -10,6 +10,7 @@ window.renderPlayerSkills = (player) => {
 
   keys.forEach((key) => {
     const value = Number(skills[key] ?? 0);
+    const safeValue = Math.max(0, Math.min(100, value));
     const label = window.SKILL_LABELS_PL?.[key] || key;
 
     const row = document.createElement('div');
@@ -17,10 +18,13 @@ window.renderPlayerSkills = (player) => {
     row.innerHTML = `
       <span class="skill-name">${label}</span>
       <div class="skill-bar-wrap">
-        <div class="skill-bar" style="width:${Math.max(0, Math.min(100, value))}%"></div>
+        <div class="skill-bar" style="width:${safeValue}%"></div>
       </div>
       <span class="skill-value">${value}</span>
     `;
     grid.appendChild(row);
   });
 };
+
+// Główna nazwa używana przez display.js
+window.renderPlayerDetailSkills = window.renderPlayerSkills;
