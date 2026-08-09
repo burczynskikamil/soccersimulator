@@ -6,13 +6,12 @@ window.showPlayerDetail = (id) => {
   const ovr = Number(player.ovr ?? 0);
   const value = Number(player.value ?? 0);
   const height = Number(player.height ?? 0);
-  const growth = Number(player.growth ?? 0);
   const potentialMin = Number(player.hiddenPotentialMin ?? 0);
   const potentialMax = Number(player.hiddenPotentialMax ?? 0);
 
   const positionName = (window.POSITION_NAMES && window.POSITION_NAMES[player.position])
     ? window.POSITION_NAMES[player.position]
-    : player.position;
+    : (player.position ?? '-');
 
   window.showTab('player-view');
 
@@ -24,7 +23,10 @@ window.showPlayerDetail = (id) => {
   el('pv-ovr').textContent = String(ovr);
   el('pv-value').textContent = formatCurrency(value);
   el('pv-height').textContent = `${height} cm`;
-  el('pv-growth').textContent = `${growth.toFixed(2)}/1.0`;
+
+  // usuwamy dziesiętny "wzrost/growth"
+  const growthEl = el('pv-growth');
+  if (growthEl) growthEl.textContent = '-';
 
   if (typeof window.renderPlayerDetailTeamAssignment === 'function') {
     window.renderPlayerDetailTeamAssignment(id);
