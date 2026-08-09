@@ -20,8 +20,14 @@ window.renderTeamsList = () => {
       <td>${teamPlayers.length}</td>
       <td>${formatCurrency(team.budget || 0)}</td>
       <td>${formatCurrency(teamValue)}</td>
-      <td><button class="btn" onclick="window.deleteTeamConfirm('${team.id}', '${team.name.replace(/'/g, "\\'")}'" style="background:#ff4d4f;color:white;border:0">✕</button></td>
+      <td><button class="btn team-delete-btn" style="background:#ff4d4f;color:white;border:0">✕</button></td>
     `;
+
+    const deleteBtn = tr.querySelector('.team-delete-btn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', () => window.deleteTeamConfirm(team.id, team.name));
+    }
+
     $teamsTable.appendChild(tr);
   });
 };
