@@ -10,7 +10,7 @@ window.POSITION_NAMES = {
 
 window.POSITION_COLORS = {
   'ST': { bg: '#ff4d4f', text: '#fff' },
-  'CM': { bg: '#1890ff', text: '#fff' },
-  'CB': { bg: '#52c41a', text: '#fff' },
-  'GK': { bg: '#faad14', text: '#000' }
+  'CM': { bg: '#2db34a', text: '#fff' },
+  'CB': { bg: '#ffb300', text: '#000' },
+  'GK': { bg: '#3f7fff', text: '#fff' }
 };
