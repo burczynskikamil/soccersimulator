@@ -20,7 +20,7 @@
         <button id="tab-teams" class="tab">🏆 Drużyny</button>
       </nav>
       <div class="top-actions">
-        <span id="db-status" style="color: #94a3b8; font-size: 12px;">⏳ Łączenie z bazą...</span>
+        <span id="db-status" style="color: #94a3b8; font-size: 12px;">⏳ Ładowanie modułów...</span>
       </div>
     </header>
     <main>
@@ -240,6 +240,7 @@
     <footer class="footer">SoccerSimulator — League Manager • Dane w Supabase</footer>
   </div>
 
+  <!-- Load database module first, then module loader -->
   <script src="db.js"></script>
   <script src="app.js"></script>
 </body>
